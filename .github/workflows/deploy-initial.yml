@@ -1,0 +1,193 @@
+name: Initial Deployment to Oracle Cloud
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_initial_setup:
+        description: 'Type "INITIAL" to confirm this is initial deployment'
+        required: true
+        default: "NO"
+
+jobs:
+  deploy-initial:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm_initial_setup }}" != "INITIAL" ]; then
+            echo "❌ Confirmation failed. Please type INITIAL to proceed."
+            exit 1
+          fi
+          echo "✅ Confirmation validated"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_SSH_PRIVATE_KEY }}" > ~/.ssh/oracle_key
+          chmod 600 ~/.ssh/oracle_key
+          ssh-keyscan -H ${{ secrets.ORACLE_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Test SSH connection
+        run: |
+          ssh -i ~/.ssh/oracle_key -o StrictHostKeyChecking=no ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} "echo '✅ SSH connection successful'"
+
+      - name: Update system and install dependencies
+        run: |
+          ssh -i ~/.ssh/oracle_key ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} << 'EOF'
+            set -e
+            echo "📦 Updating system packages..."
+            sudo apt update && sudo apt upgrade -y
+            
+            echo "📦 Installing Node.js 20..."
+            if ! command -v node &> /dev/null; then
+              curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+              sudo apt install -y nodejs
+            fi
+            node --version
+            
+            echo "📦 Installing additional dependencies..."
+            sudo apt install -y unzip rsync
+          EOF
+
+      - name: Create FoundryVTT user and directories
+        run: |
+          ssh -i ~/.ssh/oracle_key ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} << 'EOF'
+            set -e
+            echo "👤 Creating foundryvtt user..."
+            if ! id -u foundryvtt > /dev/null 2>&1; then
+              sudo useradd -r -s /bin/bash -d /opt/foundryvtt -m foundryvtt
+              echo "✅ User created"
+            else
+              echo "ℹ️  User already exists"
+            fi
+            
+            echo "📁 Creating directories..."
+            sudo mkdir -p /opt/foundryvtt/data
+            sudo chown -R foundryvtt:foundryvtt /opt/foundryvtt
+          EOF
+
+      - name: Create deployment archive
+        run: |
+          echo "📦 Creating deployment archive..."
+          tar --exclude='node_modules' \
+              --exclude='.git' \
+              --exclude='.github' \
+              --exclude='tmp' \
+              --exclude='*.log' \
+              -czf foundryvtt-deploy.tar.gz .
+
+      - name: Upload application files
+        run: |
+          echo "⬆️  Uploading application files..."
+          scp -i ~/.ssh/oracle_key foundryvtt-deploy.tar.gz \
+            ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }}:/tmp/
+
+      - name: Extract and install application
+        run: |
+          ssh -i ~/.ssh/oracle_key ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} << 'EOF'
+            set -e
+            echo "📂 Extracting application files..."
+            cd /tmp
+            sudo -u foundryvtt tar -xzf foundryvtt-deploy.tar.gz -C /opt/foundryvtt/
+            
+            echo "📦 Installing Node.js dependencies..."
+            cd /opt/foundryvtt
+            sudo -u foundryvtt npm install --production
+            
+            echo "🧹 Cleaning up..."
+            rm /tmp/foundryvtt-deploy.tar.gz
+          EOF
+
+      - name: Configure firewall
+        run: |
+          ssh -i ~/.ssh/oracle_key ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} << 'EOF'
+            set -e
+            echo "🔥 Configuring UFW firewall..."
+            
+            # Check if UFW is installed
+            if ! command -v ufw &> /dev/null; then
+              sudo apt install -y ufw
+            fi
+            
+            # Configure firewall rules
+            sudo ufw --force enable
+            sudo ufw allow 22/tcp comment 'SSH'
+            sudo ufw allow 30000/tcp comment 'FoundryVTT'
+            sudo ufw status
+          EOF
+
+      - name: Create systemd service
+        run: |
+          ssh -i ~/.ssh/oracle_key ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} << 'EOF'
+            set -e
+            echo "⚙️  Creating systemd service..."
+            
+            sudo tee /etc/systemd/system/foundryvtt.service > /dev/null << 'SERVICE'
+            [Unit]
+            Description=Foundry Virtual Tabletop
+            After=network.target
+            
+            [Service]
+            Type=simple
+            User=foundryvtt
+            WorkingDirectory=/opt/foundryvtt
+            ExecStart=/usr/bin/node /opt/foundryvtt/main.js --dataPath=/opt/foundryvtt/data
+            Restart=on-failure
+            RestartSec=10
+            StandardOutput=journal
+            StandardError=journal
+            Environment="NODE_ENV=production"
+            
+            [Install]
+            WantedBy=multi-user.target
+            SERVICE
+            
+            echo "🔄 Enabling and starting service..."
+            sudo systemctl daemon-reload
+            sudo systemctl enable foundryvtt
+            sudo systemctl start foundryvtt
+            
+            echo "⏳ Waiting for service to start..."
+            sleep 5
+            
+            echo "📊 Service status:"
+            sudo systemctl status foundryvtt --no-pager || true
+          EOF
+
+      - name: Verify deployment
+        run: |
+          ssh -i ~/.ssh/oracle_key ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} << 'EOF'
+            set -e
+            echo "✅ Checking if FoundryVTT is running..."
+            
+            if sudo systemctl is-active --quiet foundryvtt; then
+              echo "✅ FoundryVTT service is running!"
+              
+              # Check if port is listening
+              if sudo netstat -tuln | grep -q ':30000'; then
+                echo "✅ Port 30000 is listening!"
+              else
+                echo "⚠️  Port 30000 is not yet listening. Service may still be starting..."
+              fi
+            else
+              echo "❌ FoundryVTT service is not running!"
+              echo "📋 Last 20 log lines:"
+              sudo journalctl -u foundryvtt -n 20 --no-pager
+              exit 1
+            fi
+          EOF
+
+      - name: Display access information
+        run: |
+          echo "🎉 Deployment complete!"
+          echo "📍 Access your FoundryVTT instance at:"
+          echo "   http://${{ secrets.ORACLE_HOST }}:30000"
+          echo ""
+          echo "📋 Useful commands:"
+          echo "   View logs: sudo journalctl -u foundryvtt -f"
+          echo "   Restart:   sudo systemctl restart foundryvtt"
+          echo "   Status:    sudo systemctl status foundryvtt"

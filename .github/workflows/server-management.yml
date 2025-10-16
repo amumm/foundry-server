@@ -1,0 +1,141 @@
+name: Server Management
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Action to perform"
+        required: true
+        type: choice
+        options:
+          - status
+          - restart
+          - stop
+          - start
+          - logs
+          - disk-usage
+
+jobs:
+  manage-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_SSH_PRIVATE_KEY }}" > ~/.ssh/oracle_key
+          chmod 600 ~/.ssh/oracle_key
+          ssh-keyscan -H ${{ secrets.ORACLE_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Check status
+        if: ${{ github.event.inputs.action == 'status' }}
+        run: |
+          ssh -i ~/.ssh/oracle_key ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} << 'EOF'
+            echo "📊 FoundryVTT Service Status:"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            sudo systemctl status foundryvtt --no-pager || true
+            echo ""
+            echo "📊 System Resources:"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "Memory Usage:"
+            free -h
+            echo ""
+            echo "CPU Load:"
+            uptime
+            echo ""
+            echo "Disk Usage:"
+            df -h /opt/foundryvtt
+            echo ""
+            echo "Network Listeners:"
+            sudo netstat -tuln | grep -E ':(30000|443|80)' || echo "No FoundryVTT ports listening"
+          EOF
+
+      - name: Restart service
+        if: ${{ github.event.inputs.action == 'restart' }}
+        run: |
+          ssh -i ~/.ssh/oracle_key ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} << 'EOF'
+            set -e
+            echo "🔄 Restarting FoundryVTT service..."
+            sudo systemctl restart foundryvtt
+            
+            echo "⏳ Waiting for service to start..."
+            sleep 5
+            
+            if sudo systemctl is-active --quiet foundryvtt; then
+              echo "✅ Service restarted successfully!"
+              sudo systemctl status foundryvtt --no-pager
+            else
+              echo "❌ Service failed to start!"
+              sudo journalctl -u foundryvtt -n 30 --no-pager
+              exit 1
+            fi
+          EOF
+
+      - name: Stop service
+        if: ${{ github.event.inputs.action == 'stop' }}
+        run: |
+          ssh -i ~/.ssh/oracle_key ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} << 'EOF'
+            set -e
+            echo "⏸️  Stopping FoundryVTT service..."
+            sudo systemctl stop foundryvtt
+            echo "✅ Service stopped"
+            sudo systemctl status foundryvtt --no-pager || true
+          EOF
+
+      - name: Start service
+        if: ${{ github.event.inputs.action == 'start' }}
+        run: |
+          ssh -i ~/.ssh/oracle_key ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} << 'EOF'
+            set -e
+            echo "▶️  Starting FoundryVTT service..."
+            sudo systemctl start foundryvtt
+            
+            echo "⏳ Waiting for service to start..."
+            sleep 5
+            
+            if sudo systemctl is-active --quiet foundryvtt; then
+              echo "✅ Service started successfully!"
+              sudo systemctl status foundryvtt --no-pager
+            else
+              echo "❌ Service failed to start!"
+              sudo journalctl -u foundryvtt -n 30 --no-pager
+              exit 1
+            fi
+          EOF
+
+      - name: View logs
+        if: ${{ github.event.inputs.action == 'logs' }}
+        run: |
+          ssh -i ~/.ssh/oracle_key ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} << 'EOF'
+            echo "📋 Last 100 lines of FoundryVTT logs:"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            sudo journalctl -u foundryvtt -n 100 --no-pager
+          EOF
+
+      - name: Check disk usage
+        if: ${{ github.event.inputs.action == 'disk-usage' }}
+        run: |
+          ssh -i ~/.ssh/oracle_key ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} << 'EOF'
+            echo "💾 Disk Usage Report:"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            echo "Overall disk usage:"
+            df -h
+            echo ""
+            echo "FoundryVTT directory sizes:"
+            sudo du -sh /opt/foundryvtt/* 2>/dev/null | sort -h
+            echo ""
+            echo "Data directory breakdown:"
+            if [ -d "/opt/foundryvtt/data" ]; then
+              sudo du -sh /opt/foundryvtt/data/* 2>/dev/null | sort -h
+            else
+              echo "No data directory found"
+            fi
+            echo ""
+            echo "Backups:"
+            if [ -d "/opt/foundryvtt/backups" ]; then
+              sudo du -sh /opt/foundryvtt/backups
+              sudo ls -lh /opt/foundryvtt/backups/ 2>/dev/null | tail -n 10
+            else
+              echo "No backups directory found"
+            fi
+          EOF
