@@ -1,0 +1,42 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Node modules (except private @foundryvtt packages)
+node_modules/*
+!node_modules/@foundryvtt
+
+# Logs
+logs
+*.log
+npm-debug.log*
+tmp
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files
+Dockerfile
+.dockerignore
+
+# Documentation
+README.md
+*.md
+
+# Runtime data directories (will be created in container)
+data
+

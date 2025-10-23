@@ -1,1 +1,3 @@
-node_modules
+# Node modules (except private @foundryvtt packages needed for Docker build)
+node_modules/*
+!node_modules/@foundryvtt
