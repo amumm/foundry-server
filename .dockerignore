@@ -1,0 +1,39 @@
+# Node modules (copied to container - comment out to include in build)
+# node_modules
+
+# Git files
+.git
+.gitignore
+.github
+
+# Documentation
+*.md
+DEPLOYMENT.md
+QUICKSTART.md
+SETUP_COMPLETE.md
+
+# Development files
+.vscode
+.idea
+*.log
+tmp/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Build artifacts
+*.tar.gz
+*.zip
+
+# Workspace files
+*.code-workspace
+
