@@ -33,6 +33,13 @@ steps:
       - "--allow-unauthenticated"
       - "--platform"
       - "managed"
+      - "--execution-environment=gen2"
+      - "--add-volume=name=foundry-data,type=cloud-storage,bucket=foundry-server-data-476001"
+      - "--add-volume-mount=volume=foundry-data,mount-path=/app/data"
+      - "--add-volume=name=foundry-packages,type=cloud-storage,bucket=foundry-server-packages-476001"
+      - "--add-volume-mount=volume=foundry-packages,mount-path=/app/packages"
+      - "--min-instances=1"
+      - "--max-instances=1"
 
 images:
   - "gcr.io/$PROJECT_ID/github.com/amumm/foundry-server:$COMMIT_SHA"
