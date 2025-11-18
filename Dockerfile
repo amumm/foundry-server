@@ -40,8 +40,6 @@ COPY --chown=foundry:nodejs templates ./templates
 RUN mkdir -p /app/data /app/packages /app/logs && \
     chown -R foundry:nodejs /app/data /app/packages /app/logs
 
-USER foundry
-
 # Foundry VTT typically runs on port 30000
 EXPOSE 30000
 
