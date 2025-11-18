@@ -38,7 +38,6 @@ steps:
       - "--add-volume-mount=volume=foundry-data,mount-path=/app/data"
       - "--add-volume=name=foundry-packages,type=cloud-storage,bucket=foundry-server-packages-476001"
       - "--add-volume-mount=volume=foundry-packages,mount-path=/app/packages"
-      - "--min-instances=1"
       - "--max-instances=1"
 
 images:
