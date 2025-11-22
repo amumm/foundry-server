@@ -36,6 +36,10 @@ COPY --chown=foundry:nodejs dist ./dist
 COPY --chown=foundry:nodejs public ./public
 COPY --chown=foundry:nodejs templates ./templates
 
+# Copy and set up entrypoint script for automatic lock file cleanup
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Create directories for Foundry data
 RUN mkdir -p /app/data /app/packages /app/logs && \
     chown -R foundry:nodejs /app/data /app/packages /app/logs
@@ -46,6 +50,6 @@ EXPOSE 30000
 ENV PORT=30000
 ENV HOSTNAME="0.0.0.0"
 
-# Start the application
-CMD ["node", "main.js"]
+# Use entrypoint script that cleans up lock files before starting
+ENTRYPOINT ["/entrypoint.sh"]
 
