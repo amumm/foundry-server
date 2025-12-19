@@ -34,12 +34,25 @@ steps:
       - "--platform"
       - "managed"
       - "--execution-environment=gen2"
-      - "--add-volume=name=foundry-data,type=cloud-storage,bucket=foundry-server-data-476001"
+      # Volume mounts for persistent data storage with optimized GCS FUSE settings
+      # stat-cache-ttl and type-cache-ttl reduce metadata requests and improve lock file reliability
+      - "--add-volume=name=foundry-data,type=cloud-storage,bucket=foundry-server-data-476001,mount-options=stat-cache-ttl=120s;type-cache-ttl=120s;rename-dir-limit=10000"
       - "--add-volume-mount=volume=foundry-data,mount-path=/data"
-      - "--add-volume=name=foundry-packages,type=cloud-storage,bucket=foundry-server-packages-476001"
+      - "--add-volume=name=foundry-packages,type=cloud-storage,bucket=foundry-server-packages-476001,mount-options=stat-cache-ttl=120s;type-cache-ttl=120s;rename-dir-limit=10000"
       - "--add-volume-mount=volume=foundry-packages,mount-path=/packages"
       - "--set-env-vars=FOUNDRY_VTT_DATA_PATH=/data"
+      # Resource configuration - increased memory to prevent OOM/SIGSEGV crashes
+      - "--memory=1Gi"
+      - "--cpu=1"
+      # Timeout increased to 10 minutes for WebSocket connections
+      - "--timeout=600"
+      # Session affinity ensures WebSocket reconnects go to the same instance
+      - "--session-affinity"
+      # Scale to zero when idle (cold starts acceptable)
+      - "--min-instances=0"
       - "--max-instances=1"
+      # Concurrency limit - Foundry VTT handles its own session management
+      - "--concurrency=100"
 
 images:
   - "gcr.io/$PROJECT_ID/github.com/amumm/foundry-server:$COMMIT_SHA"
