@@ -1,0 +1,171 @@
+<form class="shop-config-form" autocomplete="off">
+  <header class="shop-header">
+    <img class="shop-image" src="{{shop.image}}" alt="{{shop.name}}" title="Click to change image">
+    <div class="shop-title">
+      <input type="text" name="name" value="{{shop.name}}" placeholder="{{localize 'SHOP_MAKER.ShopConfig.NamePlaceholder'}}">
+      <div class="shop-status">
+        <label>
+          <input type="checkbox" name="isOpen" {{checked shop.isOpen}}>
+          {{localize "SHOP_MAKER.ShopConfig.ShopOpen"}}
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs" data-group="primary">
+    <a class="item" data-tab="general">
+      <i class="fas fa-cog"></i> {{localize "SHOP_MAKER.ShopConfig.TabGeneral"}}
+    </a>
+    <a class="item" data-tab="inventory">
+      <i class="fas fa-box"></i> {{localize "SHOP_MAKER.ShopConfig.TabInventory"}}
+    </a>
+    <a class="item" data-tab="settings">
+      <i class="fas fa-sliders-h"></i> {{localize "SHOP_MAKER.ShopConfig.TabSettings"}}
+    </a>
+  </nav>
+
+  <section class="tab-content">
+    <!-- General Tab -->
+    <div class="tab" data-tab="general" data-group="primary">
+      <div class="form-group">
+        <label>{{localize "SHOP_MAKER.ShopConfig.Description"}}</label>
+        <textarea name="description" rows="4" placeholder="{{localize 'SHOP_MAKER.ShopConfig.DescriptionPlaceholder'}}">{{shop.description}}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label>{{localize "SHOP_MAKER.ShopConfig.ItemTypes"}}</label>
+        <div class="item-types-grid">
+          {{#each itemTypes}}
+          <label class="checkbox-label">
+            <input type="checkbox" class="item-type-checkbox" data-type="{{this.key}}" {{checked this.checked}}>
+            {{this.label}}
+          </label>
+          {{/each}}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>{{localize "SHOP_MAKER.ShopConfig.Rarities"}}</label>
+        <div class="rarities-config">
+          {{#each rarities}}
+          <div class="rarity-row" style="border-left: 3px solid {{this.color}}">
+            <label class="rarity-enable">
+              <input type="checkbox" class="rarity-checkbox" data-rarity="{{this.key}}" {{checked this.enabled}}>
+              <span style="color: {{this.color}}">{{this.label}}</span>
+            </label>
+            <div class="rarity-settings">
+              <label>
+                {{localize "SHOP_MAKER.ShopConfig.MaxQuantity"}}
+                <input type="number" name="config.rarityConfig.{{this.key}}.maxQuantity" value="{{this.maxQuantity}}" min="-1" {{disabled (not this.enabled)}}>
+              </label>
+              <label>
+                {{localize "SHOP_MAKER.ShopConfig.PriceModifier"}}
+                <input type="number" name="config.rarityConfig.{{this.key}}.priceModifier" value="{{this.priceModifier}}" step="0.1" min="0" {{disabled (not this.enabled)}}>
+              </label>
+            </div>
+          </div>
+          {{/each}}
+        </div>
+        <p class="notes">{{localize "SHOP_MAKER.ShopConfig.QuantityHint"}}</p>
+      </div>
+    </div>
+
+    <!-- Inventory Tab -->
+    <div class="tab" data-tab="inventory" data-group="primary">
+      <div class="inventory-controls">
+        <div class="form-group stacked">
+          <label>{{localize "SHOP_MAKER.ShopConfig.AddFromCompendium"}}</label>
+          <div class="compendium-row">
+            <select id="compendium-select">
+              <option value="">{{localize "SHOP_MAKER.ShopConfig.SelectCompendium"}}</option>
+              {{#each compendiums}}
+              <option value="{{this.id}}">{{this.label}}</option>
+              {{/each}}
+            </select>
+            <button type="button" class="add-from-compendium">
+              <i class="fas fa-plus"></i> {{localize "SHOP_MAKER.ShopConfig.Populate"}}
+            </button>
+          </div>
+        </div>
+        <button type="button" class="add-item">
+          <i class="fas fa-search"></i> {{localize "SHOP_MAKER.ShopConfig.AddItem"}}
+        </button>
+      </div>
+
+      <div class="inventory-list">
+        {{#if shop.inventory.length}}
+        <div class="inventory-header">
+          <span class="col-img"></span>
+          <span class="col-name">{{localize "SHOP_MAKER.ShopConfig.ItemName"}}</span>
+          <span class="col-type">{{localize "SHOP_MAKER.ShopConfig.Type"}}</span>
+          <span class="col-rarity">{{localize "SHOP_MAKER.ShopConfig.Rarity"}}</span>
+          <span class="col-price">{{localize "SHOP_MAKER.ShopConfig.Price"}}</span>
+          <span class="col-qty">{{localize "SHOP_MAKER.ShopConfig.Quantity"}}</span>
+          <span class="col-actions"></span>
+        </div>
+        {{#each shop.inventory}}
+        <div class="inventory-item" data-item-id="{{this.id}}">
+          <img class="col-img" src="{{this.img}}" alt="{{this.name}}">
+          <span class="col-name">{{this.name}}</span>
+          <span class="col-type">{{this.type}}</span>
+          <span class="col-rarity" style="color: {{lookup ../rarityColors this.rarity}}">{{this.rarity}}</span>
+          <span class="col-price">{{this.basePrice}}</span>
+          <input type="number" class="col-qty" value="{{this.quantity}}" min="-1" data-item-id="{{this.id}}">
+          <button type="button" class="remove-item" data-item-id="{{this.id}}" title="{{localize 'SHOP_MAKER.ShopConfig.RemoveItem'}}">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+        {{/each}}
+        {{else}}
+        <div class="inventory-empty">
+          <i class="fas fa-box-open"></i>
+          <p>{{localize "SHOP_MAKER.ShopConfig.NoItems"}}</p>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div class="tab" data-tab="settings" data-group="primary">
+      <div class="form-group">
+        <label>{{localize "SHOP_MAKER.ShopConfig.Currency"}}</label>
+        <select name="config.currency">
+          {{#each currencies}}
+          <option value="{{this.key}}" {{selected this.selected}}>{{this.label}}</option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>{{localize "SHOP_MAKER.ShopConfig.PriceModifier"}}</label>
+        <input type="number" name="config.priceModifier" value="{{shop.config.priceModifier}}" step="0.1" min="0">
+        <p class="notes">{{localize "SHOP_MAKER.ShopConfig.PriceModifierHint"}}</p>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" name="config.allowSellback" {{checked shop.config.allowSellback}}>
+          {{localize "SHOP_MAKER.ShopConfig.AllowSellback"}}
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>{{localize "SHOP_MAKER.ShopConfig.SellbackModifier"}}</label>
+        <input type="number" name="config.sellbackModifier" value="{{shop.config.sellbackModifier}}" step="0.1" min="0" max="1">
+        <p class="notes">{{localize "SHOP_MAKER.ShopConfig.SellbackModifierHint"}}</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="sheet-footer">
+    {{#unless isNew}}
+    <button type="button" class="delete-shop danger">
+      <i class="fas fa-trash"></i> {{localize "SHOP_MAKER.ShopConfig.Delete"}}
+    </button>
+    {{/unless}}
+    <button type="button" class="save-shop">
+      <i class="fas fa-save"></i> {{localize "SHOP_MAKER.ShopConfig.Save"}}
+    </button>
+  </footer>
+</form>
+

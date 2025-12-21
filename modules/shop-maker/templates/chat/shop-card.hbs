@@ -1,0 +1,16 @@
+<div class="shop-card">
+  <header class="shop-card-header">
+    <img src="{{shop.image}}" alt="{{shop.name}}">
+    <h3>{{shop.name}}</h3>
+  </header>
+  {{#if shop.description}}
+  <p class="shop-card-description">{{shop.description}}</p>
+  {{/if}}
+  <div class="shop-card-meta">
+    <span><i class="fas fa-box"></i> {{itemCount}} items available</span>
+  </div>
+  <button type="button" class="shop-card-open" data-shop-id="{{shop.id}}">
+    <i class="fas fa-door-open"></i> {{localize "SHOP_MAKER.ChatCard.OpenShop"}}
+  </button>
+</div>
+

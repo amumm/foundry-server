@@ -1,0 +1,134 @@
+<div class="shop-sheet-container">
+  <header class="shop-header">
+    <img class="shop-image" src="{{shop.image}}" alt="{{shop.name}}">
+    <div class="shop-info">
+      <h1 class="shop-name">{{shop.name}}</h1>
+      {{#if shop.description}}
+      <p class="shop-description">{{shop.description}}</p>
+      {{/if}}
+    </div>
+    <div class="shop-controls">
+      {{#if isGM}}
+      <button type="button" class="edit-shop" title="{{localize 'SHOP_MAKER.ShopSheet.EditShop'}}">
+        <i class="fas fa-cog"></i>
+      </button>
+      {{/if}}
+      <button type="button" class="refresh-shop" title="{{localize 'SHOP_MAKER.ShopSheet.Refresh'}}">
+        <i class="fas fa-sync"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="shop-body">
+    <aside class="shop-sidebar">
+      <div class="customer-info">
+        <h3>{{localize "SHOP_MAKER.ShopSheet.Customer"}}</h3>
+        <select class="actor-select">
+          <option value="">{{localize "SHOP_MAKER.ShopSheet.SelectCharacter"}}</option>
+          {{#each ownedActors}}
+          <option value="{{this.id}}" {{selected (eq this.id ../selectedActor.id)}}>{{this.name}}</option>
+          {{/each}}
+        </select>
+        {{#if selectedActor}}
+        <div class="currency-display">
+          <i class="fas fa-coins"></i>
+          <span>{{actorCurrency}}</span>
+        </div>
+        {{/if}}
+      </div>
+
+      <div class="filters">
+        <h3>{{localize "SHOP_MAKER.ShopSheet.Filters"}}</h3>
+        
+        <div class="filter-group">
+          <input type="text" class="search-input" placeholder="{{localize 'SHOP_MAKER.ShopSheet.SearchPlaceholder'}}" value="{{filters.search}}">
+        </div>
+
+        <div class="filter-group">
+          <label>{{localize "SHOP_MAKER.ShopSheet.Type"}}</label>
+          <select class="type-filter">
+            <option value="">{{localize "SHOP_MAKER.ShopSheet.AllTypes"}}</option>
+            {{#each itemTypes}}
+            <option value="{{this.value}}" {{selected this.selected}}>{{this.label}}</option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>{{localize "SHOP_MAKER.ShopSheet.Rarity"}}</label>
+          <select class="rarity-filter">
+            <option value="">{{localize "SHOP_MAKER.ShopSheet.AllRarities"}}</option>
+            {{#each rarities}}
+            <option value="{{this.value}}" {{selected this.selected}} style="color: {{this.color}}">{{this.label}}</option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>{{localize "SHOP_MAKER.ShopSheet.SortBy"}}</label>
+          <div class="sort-row">
+            <select class="sort-select">
+              {{#each sortOptions}}
+              <option value="{{this.value}}" {{selected (eq this.value ../filters.sort)}}>{{this.label}}</option>
+              {{/each}}
+            </select>
+            <button type="button" class="sort-direction" title="{{localize 'SHOP_MAKER.ShopSheet.ToggleSortDirection'}}">
+              <i class="fas fa-sort-{{#if (eq filters.sortDir 'asc')}}up{{else}}down{{/if}}"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label class="checkbox-label">
+            <input type="checkbox" class="in-stock-filter" {{checked filters.inStock}}>
+            {{localize "SHOP_MAKER.ShopSheet.InStockOnly"}}
+          </label>
+        </div>
+      </div>
+    </aside>
+
+    <main class="shop-inventory">
+      {{#if inventory.length}}
+      <div class="inventory-grid">
+        {{#each inventory}}
+        <div class="shop-item {{#unless this.inStock}}out-of-stock{{/unless}} {{#unless this.canAfford}}cannot-afford{{/unless}}" data-item-id="{{this.id}}">
+          <div class="item-image">
+            <img src="{{this.img}}" alt="{{this.name}}">
+            {{#unless this.inStock}}
+            <div class="out-of-stock-overlay">
+              <span>{{localize "SHOP_MAKER.ShopSheet.OutOfStock"}}</span>
+            </div>
+            {{/unless}}
+          </div>
+          <div class="item-details">
+            <h4 class="item-name" title="{{localize 'SHOP_MAKER.ShopSheet.ClickToViewDetails'}}">{{this.name}}</h4>
+            <div class="item-meta">
+              <span class="item-rarity" style="color: {{this.rarityColor}}">{{this.rarityLabel}}</span>
+              <span class="item-quantity">
+                <i class="fas fa-cubes"></i> {{this.quantityDisplay}}
+              </span>
+            </div>
+            <div class="item-price">
+              <i class="fas fa-coins"></i>
+              <span>{{this.priceDisplay}}</span>
+            </div>
+          </div>
+          {{#if ../canPurchase}}
+          <button type="button" class="purchase-btn" {{#unless this.inStock}}disabled{{/unless}} {{#unless this.canAfford}}disabled title="{{localize 'SHOP_MAKER.ShopSheet.InsufficientFunds'}}"{{/unless}}>
+            <i class="fas fa-shopping-cart"></i>
+            {{localize "SHOP_MAKER.ShopSheet.Buy"}}
+          </button>
+          {{/if}}
+        </div>
+        {{/each}}
+      </div>
+      {{else}}
+      <div class="inventory-empty">
+        <i class="fas fa-store-slash"></i>
+        <p>{{localize "SHOP_MAKER.ShopSheet.NoItemsMatch"}}</p>
+      </div>
+      {{/if}}
+    </main>
+  </div>
+</div>
+

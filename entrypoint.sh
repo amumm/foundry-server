@@ -35,6 +35,27 @@ else
   echo "WARNING: Mount points may not be ready"
 fi
 
+# Sync bundled modules to the data directory
+# This copies modules that are bundled with the Docker image to persistent storage
+if [ -d "/app/bundled-modules" ]; then
+  echo "Syncing bundled modules to /data/Data/modules..."
+  mkdir -p /data/Data/modules
+  
+  for module_dir in /app/bundled-modules/*/; do
+    if [ -d "$module_dir" ]; then
+      module_name=$(basename "$module_dir")
+      target_dir="/data/Data/modules/$module_name"
+      
+      # Always sync to ensure latest version
+      echo "  Syncing module: $module_name"
+      rm -rf "$target_dir"
+      cp -r "$module_dir" "$target_dir"
+    fi
+  done
+  
+  echo "Bundled modules synced successfully"
+fi
+
 echo "Starting Foundry VTT..."
 
 # Start Foundry VTT with node

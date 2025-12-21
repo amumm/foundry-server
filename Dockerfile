@@ -36,6 +36,9 @@ COPY --chown=foundry:nodejs dist ./dist
 COPY --chown=foundry:nodejs public ./public
 COPY --chown=foundry:nodejs templates ./templates
 
+# Copy bundled modules (will be synced to /data/modules on startup)
+COPY --chown=foundry:nodejs modules ./bundled-modules
+
 # Copy and set up entrypoint script for automatic lock file cleanup
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

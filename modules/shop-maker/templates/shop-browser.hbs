@@ -1,0 +1,73 @@
+<div class="shop-browser-container">
+  <header class="browser-header">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" class="search-input" placeholder="{{localize 'SHOP_MAKER.ShopBrowser.SearchPlaceholder'}}" value="{{searchFilter}}">
+    </div>
+    {{#if isGM}}
+    <div class="header-actions">
+      <button type="button" class="create-preset" title="{{localize 'SHOP_MAKER.ShopBrowser.CreateFromPreset'}}">
+        <i class="fas fa-magic"></i>
+      </button>
+      <button type="button" class="create-shop" title="{{localize 'SHOP_MAKER.ShopBrowser.CreateNew'}}">
+        <i class="fas fa-plus"></i>
+      </button>
+    </div>
+    {{/if}}
+  </header>
+
+  <div class="shops-list">
+    {{#if shops.length}}
+    {{#each shops}}
+    <div class="shop-entry {{#unless this.isOpen}}closed{{/unless}}" data-shop-id="{{this.id}}">
+      <img class="shop-thumb" src="{{this.image}}" alt="{{this.name}}">
+      <div class="shop-info">
+        <h3 class="shop-name">
+          {{this.name}}
+          {{#unless this.isOpen}}
+          <span class="closed-badge">{{localize "SHOP_MAKER.ShopBrowser.Closed"}}</span>
+          {{/unless}}
+        </h3>
+        <p class="shop-meta">
+          <span><i class="fas fa-box"></i> {{this.itemCount}} {{localize "SHOP_MAKER.ShopBrowser.Items"}}</span>
+          <span><i class="fas fa-tags"></i> {{this.typeCount}} {{localize "SHOP_MAKER.ShopBrowser.Types"}}</span>
+        </p>
+      </div>
+      <div class="shop-actions">
+        <button type="button" class="open-shop" title="{{localize 'SHOP_MAKER.ShopBrowser.OpenShop'}}">
+          <i class="fas fa-door-open"></i>
+        </button>
+        {{#if this.isOwner}}
+        <button type="button" class="edit-shop" title="{{localize 'SHOP_MAKER.ShopBrowser.EditShop'}}">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button type="button" class="toggle-shop" title="{{#if this.isOpen}}{{localize 'SHOP_MAKER.ShopBrowser.CloseShop'}}{{else}}{{localize 'SHOP_MAKER.ShopBrowser.OpenShopStatus'}}{{/if}}">
+          <i class="fas fa-{{#if this.isOpen}}lock{{else}}lock-open{{/if}}"></i>
+        </button>
+        <button type="button" class="share-shop" title="{{localize 'SHOP_MAKER.ShopBrowser.ShareShop'}}">
+          <i class="fas fa-share-alt"></i>
+        </button>
+        <button type="button" class="duplicate-shop" title="{{localize 'SHOP_MAKER.ShopBrowser.DuplicateShop'}}">
+          <i class="fas fa-copy"></i>
+        </button>
+        <button type="button" class="delete-shop danger" title="{{localize 'SHOP_MAKER.ShopBrowser.DeleteShop'}}">
+          <i class="fas fa-trash"></i>
+        </button>
+        {{/if}}
+      </div>
+    </div>
+    {{/each}}
+    {{else}}
+    <div class="no-shops">
+      <i class="fas fa-store-slash"></i>
+      <p>{{localize "SHOP_MAKER.ShopBrowser.NoShops"}}</p>
+      {{#if isGM}}
+      <button type="button" class="create-shop">
+        <i class="fas fa-plus"></i> {{localize "SHOP_MAKER.ShopBrowser.CreateFirst"}}
+      </button>
+      {{/if}}
+    </div>
+    {{/if}}
+  </div>
+</div>
+

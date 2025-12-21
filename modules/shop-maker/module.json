@@ -1,0 +1,33 @@
+{
+  "id": "shop-maker",
+  "title": "Shop Maker",
+  "description": "Create and manage shops for players to browse and purchase items. Configure shops by item type, rarity, and quantity.",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "11",
+    "verified": "12",
+    "maximum": "12"
+  },
+  "authors": [
+    {
+      "name": "Your Name",
+      "url": "https://github.com/yourusername"
+    }
+  ],
+  "esmodules": [
+    "scripts/module.js"
+  ],
+  "styles": [
+    "styles/shop-maker.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "socket": true,
+  "flags": {}
+}
+
