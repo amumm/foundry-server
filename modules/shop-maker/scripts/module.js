@@ -56,17 +56,19 @@ Hooks.once("ready", () => {
 });
 
 // Add shop controls to the scene controls
+// Foundry v13 changed the controls structure - it's now an object, not an array
 Hooks.on("getSceneControlButtons", (controls) => {
   if (!game.user.isGM) return;
 
-  const shopControls = {
+  // Foundry v13+ uses object structure
+  controls["shop-maker"] = {
     name: "shop-maker",
     title: "SHOP_MAKER.Controls.Title",
     icon: "fas fa-store",
-    layer: "controls",
+    layer: "tokens", // Use existing layer
     visible: game.user.isGM,
-    tools: [
-      {
+    tools: {
+      createShop: {
         name: "create-shop",
         title: "SHOP_MAKER.Controls.CreateShop",
         icon: "fas fa-plus",
@@ -75,7 +77,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
           new ShopConfig().render(true);
         }
       },
-      {
+      manageShops: {
         name: "manage-shops",
         title: "SHOP_MAKER.Controls.ManageShops",
         icon: "fas fa-list",
@@ -84,10 +86,8 @@ Hooks.on("getSceneControlButtons", (controls) => {
           game.shopMaker.openShopBrowser();
         }
       }
-    ]
+    }
   };
-
-  controls.push(shopControls);
 });
 
 // Socket handling for real-time updates
