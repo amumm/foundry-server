@@ -44,6 +44,7 @@ export class ShopSheet extends Application {
   async getData() {
     const inventory = this.shop.getFilteredInventory(this.filters);
     const actorCurrency = this.selectedActor ? this._getActorCurrencyDisplay() : null;
+    const selectedActorId = this.selectedActor?.id;
 
     return {
       shop: this.shop,
@@ -61,16 +62,21 @@ export class ShopSheet extends Application {
       itemTypes: this._getFilterOptions("type"),
       rarities: this._getFilterOptions("rarity"),
       sortOptions: [
-        { value: "name", label: game.i18n.localize("SHOP_MAKER.Sort.Name") },
-        { value: "price", label: game.i18n.localize("SHOP_MAKER.Sort.Price") },
-        { value: "rarity", label: game.i18n.localize("SHOP_MAKER.Sort.Rarity") }
+        { value: "name", label: game.i18n.localize("SHOP_MAKER.Sort.Name"), selected: this.filters.sort === "name" },
+        { value: "price", label: game.i18n.localize("SHOP_MAKER.Sort.Price"), selected: this.filters.sort === "price" },
+        { value: "rarity", label: game.i18n.localize("SHOP_MAKER.Sort.Rarity"), selected: this.filters.sort === "rarity" }
       ],
+      sortIcon: this.filters.sortDir === "asc" ? "up" : "down",
       selectedActor: this.selectedActor,
       actorCurrency,
       currency: SHOP_MAKER.CURRENCY[this.shop.config.currency],
       isGM: game.user.isGM,
       canPurchase: game.settings.get(SHOP_MAKER.ID, "allowPlayerPurchase") || game.user.isGM,
-      ownedActors: game.actors.filter(a => a.isOwner && a.type === "character")
+      ownedActors: game.actors.filter(a => a.isOwner && a.type === "character").map(a => ({
+        id: a.id,
+        name: a.name,
+        isSelected: a.id === selectedActorId
+      }))
     };
   }
 

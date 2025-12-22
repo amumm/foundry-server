@@ -5,7 +5,7 @@
       <input type="text" name="name" value="{{shop.name}}" placeholder="{{localize 'SHOP_MAKER.ShopConfig.NamePlaceholder'}}">
       <div class="shop-status">
         <label>
-          <input type="checkbox" name="isOpen" {{checked shop.isOpen}}>
+          <input type="checkbox" name="isOpen" {{#if shop.isOpen}}checked{{/if}}>
           {{localize "SHOP_MAKER.ShopConfig.ShopOpen"}}
         </label>
       </div>
@@ -37,7 +37,7 @@
         <div class="item-types-grid">
           {{#each itemTypes}}
           <label class="checkbox-label">
-            <input type="checkbox" class="item-type-checkbox" data-type="{{this.key}}" {{checked this.checked}}>
+            <input type="checkbox" class="item-type-checkbox" data-type="{{this.key}}" {{#if this.checked}}checked{{/if}}>
             {{this.label}}
           </label>
           {{/each}}
@@ -50,17 +50,17 @@
           {{#each rarities}}
           <div class="rarity-row" style="border-left: 3px solid {{this.color}}">
             <label class="rarity-enable">
-              <input type="checkbox" class="rarity-checkbox" data-rarity="{{this.key}}" {{checked this.enabled}}>
+              <input type="checkbox" class="rarity-checkbox" data-rarity="{{this.key}}" {{#if this.enabled}}checked{{/if}}>
               <span style="color: {{this.color}}">{{this.label}}</span>
             </label>
             <div class="rarity-settings">
               <label>
                 {{localize "SHOP_MAKER.ShopConfig.MaxQuantity"}}
-                <input type="number" name="config.rarityConfig.{{this.key}}.maxQuantity" value="{{this.maxQuantity}}" min="-1" {{disabled (not this.enabled)}}>
+                <input type="number" name="config.rarityConfig.{{this.key}}.maxQuantity" value="{{this.maxQuantity}}" min="-1" {{#unless this.enabled}}disabled{{/unless}}>
               </label>
               <label>
                 {{localize "SHOP_MAKER.ShopConfig.PriceModifier"}}
-                <input type="number" name="config.rarityConfig.{{this.key}}.priceModifier" value="{{this.priceModifier}}" step="0.1" min="0" {{disabled (not this.enabled)}}>
+                <input type="number" name="config.rarityConfig.{{this.key}}.priceModifier" value="{{this.priceModifier}}" step="0.1" min="0" {{#unless this.enabled}}disabled{{/unless}}>
               </label>
             </div>
           </div>
@@ -108,7 +108,7 @@
           <img class="col-img" src="{{this.img}}" alt="{{this.name}}">
           <span class="col-name">{{this.name}}</span>
           <span class="col-type">{{this.type}}</span>
-          <span class="col-rarity" style="color: {{lookup ../rarityColors this.rarity}}">{{this.rarity}}</span>
+          <span class="col-rarity">{{this.rarity}}</span>
           <span class="col-price">{{this.basePrice}}</span>
           <input type="number" class="col-qty" value="{{this.quantity}}" min="-1" data-item-id="{{this.id}}">
           <button type="button" class="remove-item" data-item-id="{{this.id}}" title="{{localize 'SHOP_MAKER.ShopConfig.RemoveItem'}}">
@@ -131,7 +131,7 @@
         <label>{{localize "SHOP_MAKER.ShopConfig.Currency"}}</label>
         <select name="config.currency">
           {{#each currencies}}
-          <option value="{{this.key}}" {{selected this.selected}}>{{this.label}}</option>
+          <option value="{{this.key}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
           {{/each}}
         </select>
       </div>
@@ -144,7 +144,7 @@
 
       <div class="form-group">
         <label>
-          <input type="checkbox" name="config.allowSellback" {{checked shop.config.allowSellback}}>
+          <input type="checkbox" name="config.allowSellback" {{#if shop.config.allowSellback}}checked{{/if}}>
           {{localize "SHOP_MAKER.ShopConfig.AllowSellback"}}
         </label>
       </div>
@@ -168,4 +168,3 @@
     </button>
   </footer>
 </form>
-

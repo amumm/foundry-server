@@ -26,7 +26,7 @@
         <select class="actor-select">
           <option value="">{{localize "SHOP_MAKER.ShopSheet.SelectCharacter"}}</option>
           {{#each ownedActors}}
-          <option value="{{this.id}}" {{selected (eq this.id ../selectedActor.id)}}>{{this.name}}</option>
+          <option value="{{this.id}}" {{#if this.isSelected}}selected{{/if}}>{{this.name}}</option>
           {{/each}}
         </select>
         {{#if selectedActor}}
@@ -49,7 +49,7 @@
           <select class="type-filter">
             <option value="">{{localize "SHOP_MAKER.ShopSheet.AllTypes"}}</option>
             {{#each itemTypes}}
-            <option value="{{this.value}}" {{selected this.selected}}>{{this.label}}</option>
+            <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
             {{/each}}
           </select>
         </div>
@@ -59,7 +59,7 @@
           <select class="rarity-filter">
             <option value="">{{localize "SHOP_MAKER.ShopSheet.AllRarities"}}</option>
             {{#each rarities}}
-            <option value="{{this.value}}" {{selected this.selected}} style="color: {{this.color}}">{{this.label}}</option>
+            <option value="{{this.value}}" {{#if this.selected}}selected{{/if}} style="color: {{this.color}}">{{this.label}}</option>
             {{/each}}
           </select>
         </div>
@@ -69,18 +69,18 @@
           <div class="sort-row">
             <select class="sort-select">
               {{#each sortOptions}}
-              <option value="{{this.value}}" {{selected (eq this.value ../filters.sort)}}>{{this.label}}</option>
+              <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
               {{/each}}
             </select>
             <button type="button" class="sort-direction" title="{{localize 'SHOP_MAKER.ShopSheet.ToggleSortDirection'}}">
-              <i class="fas fa-sort-{{#if (eq filters.sortDir 'asc')}}up{{else}}down{{/if}}"></i>
+              <i class="fas fa-sort-{{sortIcon}}"></i>
             </button>
           </div>
         </div>
 
         <div class="filter-group">
           <label class="checkbox-label">
-            <input type="checkbox" class="in-stock-filter" {{checked filters.inStock}}>
+            <input type="checkbox" class="in-stock-filter" {{#if filters.inStock}}checked{{/if}}>
             {{localize "SHOP_MAKER.ShopSheet.InStockOnly"}}
           </label>
         </div>
@@ -131,4 +131,3 @@
     </main>
   </div>
 </div>
-
