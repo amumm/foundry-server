@@ -29,12 +29,12 @@ export const SHOP_MAKER = {
     uncommon: {
       label: "SHOP_MAKER.Rarities.Uncommon",
       color: "#1eff00",
-      defaultQuantity: 5
+      defaultQuantity: 2
     },
     rare: {
       label: "SHOP_MAKER.Rarities.Rare",
       color: "#0070dd",
-      defaultQuantity: 3
+      defaultQuantity: 1
     },
     veryRare: {
       label: "SHOP_MAKER.Rarities.VeryRare",

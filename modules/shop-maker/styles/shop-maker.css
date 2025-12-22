@@ -27,9 +27,19 @@
   font-family: "Signika", "Palatino Linotype", serif;
 }
 
-.shop-maker .window-content {
+/* V2 Application window styling */
+.shop-maker.application {
+  display: flex;
+  flex-direction: column;
+}
+
+.shop-maker .window-content,
+.shop-maker .application-content {
   background: linear-gradient(135deg, var(--shop-maker-bg-primary) 0%, var(--shop-maker-bg-secondary) 100%);
   padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .shop-maker input,
@@ -91,10 +101,19 @@
 
 /* ===== Shop Config Styles ===== */
 
+.shop-config .application-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 600px;
+  overflow: hidden;
+}
+
 .shop-config .shop-config-form {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
 }
 
 .shop-config .shop-header {
@@ -173,7 +192,10 @@
 .shop-config .tab-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px;
+  min-height: 200px;
+  max-height: 400px;
 }
 
 .shop-config .tab {
@@ -284,16 +306,31 @@
 .shop-config .inventory-list {
   background: var(--shop-maker-bg-tertiary);
   border-radius: 8px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 300px;
 }
 
 .shop-config .inventory-header,
 .shop-config .inventory-item {
   display: grid;
-  grid-template-columns: 40px 1fr 80px 80px 60px 60px 40px;
-  gap: 8px;
+  grid-template-columns: 36px 1fr 70px 70px 70px 60px 36px;
+  gap: 6px;
   align-items: center;
-  padding: 8px 12px;
+  padding: 8px 10px;
+}
+
+.shop-config .inventory-item .col-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-config .inventory-item .item-price-input,
+.shop-config .inventory-item .item-qty-input {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 0.9em;
 }
 
 .shop-config .inventory-header {
@@ -356,10 +393,18 @@
 
 /* ===== Shop Sheet Styles ===== */
 
+.shop-sheet .application-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
 .shop-sheet .shop-sheet-container {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
 }
 
 .shop-sheet .shop-header {
@@ -415,6 +460,7 @@
   display: flex;
   flex: 1;
   overflow: hidden;
+  min-height: 0;
 }
 
 .shop-sheet .shop-sidebar {
@@ -621,10 +667,25 @@
 
 /* ===== Shop Browser Styles ===== */
 
+.shop-browser .application-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
 .shop-browser .shop-browser-container {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
+}
+
+.shop-browser .shops-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
 }
 
 .shop-browser .browser-header {

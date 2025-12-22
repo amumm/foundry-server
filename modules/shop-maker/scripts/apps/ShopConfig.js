@@ -220,6 +220,24 @@ export class ShopConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     if (shopImage) {
       shopImage.addEventListener("click", () => this.#selectImage());
     }
+
+    // Item price inputs
+    html.querySelectorAll(".item-price-input").forEach(input => {
+      input.addEventListener("change", (e) => {
+        const itemId = e.target.dataset.itemId;
+        const value = e.target.value ? parseFloat(e.target.value) : null;
+        this.shop.updateItem(itemId, { customPrice: value });
+      });
+    });
+
+    // Item quantity inputs
+    html.querySelectorAll(".item-qty-input").forEach(input => {
+      input.addEventListener("change", (e) => {
+        const itemId = e.target.dataset.itemId;
+        const value = parseInt(e.target.value) || -1;
+        this.shop.updateItem(itemId, { quantity: value });
+      });
+    });
   }
 
   _activateTabs(html) {

@@ -106,11 +106,11 @@
         {{#each shop.inventory}}
         <div class="inventory-item" data-item-id="{{this.id}}">
           <img class="col-img" src="{{this.img}}" alt="{{this.name}}">
-          <span class="col-name">{{this.name}}</span>
+          <span class="col-name" title="{{this.name}}">{{this.name}}</span>
           <span class="col-type">{{this.type}}</span>
           <span class="col-rarity">{{this.rarity}}</span>
-          <span class="col-price">{{this.basePrice}}</span>
-          <input type="number" class="col-qty" value="{{this.quantity}}" min="-1" data-item-id="{{this.id}}">
+          <input type="number" class="col-price item-price-input" value="{{this.customPrice}}" placeholder="{{this.basePrice}}" min="0" data-item-id="{{this.id}}" title="Custom price (leave empty for base price: {{this.basePrice}})">
+          <input type="number" class="col-qty item-qty-input" value="{{this.quantity}}" min="-1" data-item-id="{{this.id}}" title="-1 = unlimited">
           <button type="button" data-action="removeItem" data-item-id="{{this.id}}" title="{{localize 'SHOP_MAKER.ShopConfig.RemoveItem'}}">
             <i class="fas fa-trash"></i>
           </button>

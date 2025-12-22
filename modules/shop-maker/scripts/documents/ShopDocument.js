@@ -12,7 +12,7 @@ export class ShopDocument {
     this.image = data.image || "icons/svg/hanging-sign.svg";
     this.owner = data.owner || game.user.id;
     this.isOpen = data.isOpen ?? true;
-    
+
     // Shop configuration
     this.config = {
       // Which item types this shop carries
@@ -28,10 +28,10 @@ export class ShopDocument {
       // Currency type
       currency: data.config?.currency || game.settings.get(SHOP_MAKER.ID, "defaultCurrency")
     };
-    
+
     // Shop inventory - array of item references with shop-specific data
     this.inventory = data.inventory || [];
-    
+
     // Timestamps
     this.created = data.created || Date.now();
     this.modified = data.modified || Date.now();
@@ -59,27 +59,43 @@ export class ShopDocument {
    */
   addItem(itemData, options = {}) {
     const existingIndex = this.inventory.findIndex(i => i.uuid === itemData.uuid);
-    
+
+    // Normalize the rarity
+    const itemRarity = this._normalizeRarity(itemData.system?.rarity);
+
+    // Get default quantity from rarity config (use 5 as fallback)
+    const rarityConfig = this.config.rarityConfig[itemRarity];
+    const defaultQuantity = rarityConfig?.maxQuantity ?? 5;
+
     if (existingIndex >= 0) {
       // Update existing item quantity
-      this.inventory[existingIndex].quantity += options.quantity || 1;
+      const currentQty = this.inventory[existingIndex].quantity;
+      const addQty = options.quantity ?? defaultQuantity;
+      // If either is unlimited (-1), keep unlimited
+      if (currentQty === -1 || addQty === -1) {
+        this.inventory[existingIndex].quantity = -1;
+      } else {
+        this.inventory[existingIndex].quantity = currentQty + addQty;
+      }
     } else {
-      // Add new item
+      // Add new item with sensible default quantity
+      const quantity = options.quantity ?? defaultQuantity;
+
       this.inventory.push({
         id: foundry.utils.randomID(),
         uuid: itemData.uuid,
         name: itemData.name,
         img: itemData.img,
         type: itemData.type,
-        rarity: itemData.system?.rarity || "common",
+        rarity: itemRarity,
         basePrice: this._extractPrice(itemData),
-        customPrice: options.customPrice || null,
-        quantity: options.quantity ?? -1, // -1 means unlimited
+        customPrice: options.customPrice ?? null,
+        quantity: quantity,
         maxQuantity: options.maxQuantity ?? -1,
         description: itemData.system?.description?.value || ""
       });
     }
-    
+
     this.modified = Date.now();
     return this;
   }
@@ -238,7 +254,7 @@ export class ShopDocument {
   async _deductCurrency(actor, amount) {
     const shopRate = SHOP_MAKER.CURRENCY[this.config.currency]?.rate || 100;
     const copperAmount = amount * shopRate;
-    
+
     // Simple implementation - deduct from highest denomination first
     const currency = foundry.utils.duplicate(actor.system.currency);
     let remaining = copperAmount;
@@ -246,7 +262,7 @@ export class ShopDocument {
     for (const denom of ["pp", "gp", "ep", "sp", "cp"]) {
       const rate = SHOP_MAKER.CURRENCY[denom]?.rate || 1;
       const available = currency[denom] * rate;
-      
+
       if (available >= remaining) {
         currency[denom] -= Math.ceil(remaining / rate);
         remaining = 0;
@@ -287,7 +303,7 @@ export class ShopDocument {
    */
   _itemMatchesShopTypes(item) {
     if (this.config.itemTypes.length === 0) return true;
-    
+
     const itemType = item.type;
     for (const shopType of this.config.itemTypes) {
       const mappedTypes = this._mapItemType(shopType);
@@ -329,7 +345,7 @@ export class ShopDocument {
    */
   async populateFromCompendium(options = {}) {
     const { compendiumName } = options;
-    
+
     // Get the compendium
     const pack = game.packs.get(compendiumName);
     if (!pack) {
@@ -345,12 +361,12 @@ export class ShopDocument {
 
     // Get all items from the compendium
     const items = await pack.getDocuments();
-    
+
     // Shuffle items for random selection
     const shuffledItems = [...items].sort(() => Math.random() - 0.5);
-    
+
     let addedCount = 0;
-    
+
     for (const item of shuffledItems) {
       // Check item type matches shop configuration
       if (!this._itemMatchesShopTypes(item)) {
@@ -359,7 +375,7 @@ export class ShopDocument {
 
       // Get and normalize rarity
       const itemRarity = this._normalizeRarity(item.system?.rarity);
-      
+
       // Check if rarity is enabled for this shop
       const rarityConfig = this.config.rarityConfig[itemRarity];
       if (!rarityConfig?.enabled) {
@@ -372,8 +388,9 @@ export class ShopDocument {
         continue;
       }
 
-      // Add to inventory (unlimited stock per item, but limited variety)
-      this.addItem(item, { quantity: -1 });
+      // Add to inventory with rarity-based quantity
+      const qty = rarityConfig.maxQuantity > 0 ? rarityConfig.maxQuantity : 1;
+      this.addItem(item, { quantity: qty });
       rarityCount[itemRarity]++;
       addedCount++;
     }
@@ -440,13 +457,13 @@ export class ShopDocument {
     const shops = game.settings.get(SHOP_MAKER.ID, "shops");
     shops[this.id] = this.toObject();
     await game.settings.set(SHOP_MAKER.ID, "shops", shops);
-    
+
     // Emit update event
     game.socket.emit(`module.${SHOP_MAKER.ID}`, {
       type: "shopUpdate",
       shopId: this.id
     });
-    
+
     Hooks.callAll("shopMaker.shopUpdated", this.id);
     return this;
   }
