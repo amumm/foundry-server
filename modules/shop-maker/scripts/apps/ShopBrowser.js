@@ -1,31 +1,55 @@
 /**
- * ShopBrowser - Application for browsing and managing all shops
+ * ShopBrowser - Application for browsing and managing all shops (V2)
  */
 
 import { SHOP_MAKER } from "../constants.js";
 import { ShopDocument } from "../documents/ShopDocument.js";
 
-export class ShopBrowser extends Application {
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
+export class ShopBrowser extends HandlebarsApplicationMixin(ApplicationV2) {
   constructor(options = {}) {
     super(options);
     this.searchFilter = "";
   }
 
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "shop-browser",
-      classes: ["shop-maker", "shop-browser"],
+  static DEFAULT_OPTIONS = {
+    id: "shop-browser",
+    classes: ["shop-maker", "shop-browser"],
+    window: {
       title: "SHOP_MAKER.ShopBrowser.Title",
-      template: SHOP_MAKER.TEMPLATES.shopBrowser,
-      width: 500,
-      height: 500,
+      icon: "fas fa-store",
       resizable: true
-    });
+    },
+    position: {
+      width: 500,
+      height: 500
+    },
+    actions: {
+      createShop: ShopBrowser.#onCreateShop,
+      createPreset: ShopBrowser.#onCreatePreset,
+      openShop: ShopBrowser.#onOpenShop,
+      editShop: ShopBrowser.#onEditShop,
+      deleteShop: ShopBrowser.#onDeleteShop,
+      toggleShop: ShopBrowser.#onToggleShop,
+      duplicateShop: ShopBrowser.#onDuplicateShop,
+      shareShop: ShopBrowser.#onShareShop
+    }
+  };
+
+  static PARTS = {
+    main: {
+      template: SHOP_MAKER.TEMPLATES.shopBrowser
+    }
+  };
+
+  get title() {
+    return game.i18n.localize("SHOP_MAKER.ShopBrowser.Title");
   }
 
-  async getData() {
+  async _prepareContext(options) {
     let shops = ShopDocument.getAll();
-    
+
     // Filter by search
     if (this.searchFilter) {
       const search = this.searchFilter.toLowerCase();
@@ -47,48 +71,22 @@ export class ShopBrowser extends Application {
     };
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-
-    // Search
-    html.find(".search-input").on("input", foundry.utils.debounce((e) => {
-      this.searchFilter = e.target.value;
-      this.render();
-    }, 300));
-
-    // Create new shop
-    html.find(".create-shop").on("click", this._onCreateShop.bind(this));
-
-    // Create from preset
-    html.find(".create-preset").on("click", this._onCreatePreset.bind(this));
-
-    // Open shop
-    html.find(".open-shop").on("click", this._onOpenShop.bind(this));
-
-    // Edit shop
-    html.find(".edit-shop").on("click", this._onEditShop.bind(this));
-
-    // Delete shop
-    html.find(".delete-shop").on("click", this._onDeleteShop.bind(this));
-
-    // Toggle shop open/closed
-    html.find(".toggle-shop").on("click", this._onToggleShop.bind(this));
-
-    // Duplicate shop
-    html.find(".duplicate-shop").on("click", this._onDuplicateShop.bind(this));
-
-    // Share with players
-    html.find(".share-shop").on("click", this._onShareShop.bind(this));
+  _onRender(context, options) {
+    // Search input
+    const searchInput = this.element.querySelector(".search-input");
+    if (searchInput) {
+      searchInput.addEventListener("input", foundry.utils.debounce((e) => {
+        this.searchFilter = e.target.value;
+        this.render();
+      }, 300));
+    }
   }
 
-  _onCreateShop(event) {
-    event.preventDefault();
+  static async #onCreateShop(event, target) {
     game.shopMaker.openShopConfig();
   }
 
-  async _onCreatePreset(event) {
-    event.preventDefault();
-    
+  static async #onCreatePreset(event, target) {
     const content = `
       <form>
         <div class="form-group">
@@ -125,23 +123,20 @@ export class ShopBrowser extends Application {
     }).render(true);
   }
 
-  _onOpenShop(event) {
-    event.preventDefault();
-    const shopId = event.currentTarget.closest(".shop-entry").dataset.shopId;
+  static #onOpenShop(event, target) {
+    const shopId = target.closest(".shop-entry").dataset.shopId;
     game.shopMaker.openShop(shopId);
   }
 
-  _onEditShop(event) {
-    event.preventDefault();
-    const shopId = event.currentTarget.closest(".shop-entry").dataset.shopId;
+  static #onEditShop(event, target) {
+    const shopId = target.closest(".shop-entry").dataset.shopId;
     game.shopMaker.openShopConfig(shopId);
   }
 
-  async _onDeleteShop(event) {
-    event.preventDefault();
-    const shopId = event.currentTarget.closest(".shop-entry").dataset.shopId;
+  static async #onDeleteShop(event, target) {
+    const shopId = target.closest(".shop-entry").dataset.shopId;
     const shop = game.shopMaker.getShop(shopId);
-    
+
     const confirmed = await Dialog.confirm({
       title: game.i18n.localize("SHOP_MAKER.ShopBrowser.DeleteConfirmTitle"),
       content: game.i18n.format("SHOP_MAKER.ShopBrowser.DeleteConfirmContent", { name: shop.name })
@@ -153,17 +148,16 @@ export class ShopBrowser extends Application {
     }
   }
 
-  async _onToggleShop(event) {
-    event.preventDefault();
-    const shopId = event.currentTarget.closest(".shop-entry").dataset.shopId;
+  static async #onToggleShop(event, target) {
+    const shopId = target.closest(".shop-entry").dataset.shopId;
     const shop = game.shopMaker.getShop(shopId);
-    
+
     if (shop) {
       shop.isOpen = !shop.isOpen;
       await shop.save();
       this.render();
-      
-      const status = shop.isOpen 
+
+      const status = shop.isOpen
         ? game.i18n.localize("SHOP_MAKER.ShopBrowser.StatusOpen")
         : game.i18n.localize("SHOP_MAKER.ShopBrowser.StatusClosed");
       ui.notifications.info(game.i18n.format("SHOP_MAKER.Notifications.ShopStatusChanged", {
@@ -173,11 +167,10 @@ export class ShopBrowser extends Application {
     }
   }
 
-  async _onDuplicateShop(event) {
-    event.preventDefault();
-    const shopId = event.currentTarget.closest(".shop-entry").dataset.shopId;
+  static async #onDuplicateShop(event, target) {
+    const shopId = target.closest(".shop-entry").dataset.shopId;
     const shop = game.shopMaker.getShop(shopId);
-    
+
     if (shop) {
       const newShop = new ShopDocument({
         ...shop.toObject(),
@@ -192,13 +185,11 @@ export class ShopBrowser extends Application {
     }
   }
 
-  async _onShareShop(event) {
-    event.preventDefault();
-    const shopId = event.currentTarget.closest(".shop-entry").dataset.shopId;
+  static async #onShareShop(event, target) {
+    const shopId = target.closest(".shop-entry").dataset.shopId;
     const shop = game.shopMaker.getShop(shopId);
-    
+
     if (shop) {
-      // Create a chat message with a button to open the shop
       const content = await renderTemplate(
         "modules/shop-maker/templates/chat/shop-card.hbs",
         {
@@ -206,7 +197,7 @@ export class ShopBrowser extends Application {
           itemCount: shop.inventory.length
         }
       );
-      
+
       ChatMessage.create({
         content,
         speaker: ChatMessage.getSpeaker()
@@ -222,4 +213,3 @@ Hooks.on("renderChatMessage", (message, html) => {
     game.shopMaker.openShop(shopId);
   });
 });
-

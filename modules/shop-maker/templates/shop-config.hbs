@@ -82,12 +82,12 @@
               <option value="{{this.id}}">{{this.label}}</option>
               {{/each}}
             </select>
-            <button type="button" class="add-from-compendium">
+            <button type="button" data-action="addFromCompendium">
               <i class="fas fa-plus"></i> {{localize "SHOP_MAKER.ShopConfig.Populate"}}
             </button>
           </div>
         </div>
-        <button type="button" class="add-item">
+        <button type="button" data-action="addItem">
           <i class="fas fa-search"></i> {{localize "SHOP_MAKER.ShopConfig.AddItem"}}
         </button>
       </div>
@@ -111,7 +111,7 @@
           <span class="col-rarity">{{this.rarity}}</span>
           <span class="col-price">{{this.basePrice}}</span>
           <input type="number" class="col-qty" value="{{this.quantity}}" min="-1" data-item-id="{{this.id}}">
-          <button type="button" class="remove-item" data-item-id="{{this.id}}" title="{{localize 'SHOP_MAKER.ShopConfig.RemoveItem'}}">
+          <button type="button" data-action="removeItem" data-item-id="{{this.id}}" title="{{localize 'SHOP_MAKER.ShopConfig.RemoveItem'}}">
             <i class="fas fa-trash"></i>
           </button>
         </div>
@@ -159,11 +159,11 @@
 
   <footer class="sheet-footer">
     {{#unless isNew}}
-    <button type="button" class="delete-shop danger">
+    <button type="button" data-action="deleteShop" class="danger">
       <i class="fas fa-trash"></i> {{localize "SHOP_MAKER.ShopConfig.Delete"}}
     </button>
     {{/unless}}
-    <button type="button" class="save-shop">
+    <button type="button" data-action="saveShop">
       <i class="fas fa-save"></i> {{localize "SHOP_MAKER.ShopConfig.Save"}}
     </button>
   </footer>

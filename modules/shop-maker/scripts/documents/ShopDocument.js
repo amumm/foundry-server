@@ -261,11 +261,74 @@ export class ShopDocument {
   }
 
   /**
+   * Map our shop item types to actual game system item types
+   * @param {string} shopType - Our shop type
+   * @returns {string[]} - Array of matching game item types
+   */
+  _mapItemType(shopType) {
+    const typeMap = {
+      general: ["loot", "consumable", "tool", "equipment"],
+      weapon: ["weapon"],
+      armor: ["equipment"], // D&D 5e uses "equipment" for armor
+      scroll: ["consumable"], // Scrolls are consumables in 5e
+      ingredient: ["loot", "consumable"],
+      magic: ["weapon", "equipment", "consumable", "loot"], // Magic items can be any type
+      consumable: ["consumable"],
+      tool: ["tool"],
+      loot: ["loot"]
+    };
+    return typeMap[shopType] || [shopType];
+  }
+
+  /**
+   * Check if an item matches our shop's item type configuration
+   * @param {Object} item - The item to check
+   * @returns {boolean}
+   */
+  _itemMatchesShopTypes(item) {
+    if (this.config.itemTypes.length === 0) return true;
+    
+    const itemType = item.type;
+    for (const shopType of this.config.itemTypes) {
+      const mappedTypes = this._mapItemType(shopType);
+      if (mappedTypes.includes(itemType)) {
+        // Additional check for magic items - they should have rarity uncommon+
+        if (shopType === "magic") {
+          const rarity = item.system?.rarity || "common";
+          if (rarity !== "common") return true;
+        } else {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Normalize rarity string to match our constants
+   * @param {string} rarity - The rarity from the item
+   * @returns {string}
+   */
+  _normalizeRarity(rarity) {
+    if (!rarity) return "common";
+    const rarityLower = rarity.toLowerCase().replace(/\s+/g, "");
+    const rarityMap = {
+      "common": "common",
+      "uncommon": "uncommon",
+      "rare": "rare",
+      "veryrare": "veryRare",
+      "legendary": "legendary",
+      "artifact": "artifact"
+    };
+    return rarityMap[rarityLower] || "common";
+  }
+
+  /**
    * Populate shop inventory based on item type and rarity configuration
    * @param {Object} options - Population options
    */
   async populateFromCompendium(options = {}) {
-    const { compendiumName, itemTypes, rarities } = options;
+    const { compendiumName } = options;
     
     // Get the compendium
     const pack = game.packs.get(compendiumName);
@@ -274,34 +337,49 @@ export class ShopDocument {
       return;
     }
 
+    // Track how many items we've added per rarity
+    const rarityCount = {};
+    for (const rarity of Object.keys(SHOP_MAKER.RARITIES)) {
+      rarityCount[rarity] = 0;
+    }
+
     // Get all items from the compendium
     const items = await pack.getDocuments();
     
-    for (const item of items) {
-      // Check item type
-      if (itemTypes && itemTypes.length > 0 && !itemTypes.includes(item.type)) {
+    // Shuffle items for random selection
+    const shuffledItems = [...items].sort(() => Math.random() - 0.5);
+    
+    let addedCount = 0;
+    
+    for (const item of shuffledItems) {
+      // Check item type matches shop configuration
+      if (!this._itemMatchesShopTypes(item)) {
         continue;
       }
 
-      // Check rarity
-      const itemRarity = item.system?.rarity || "common";
-      if (rarities && rarities.length > 0 && !rarities.includes(itemRarity)) {
-        continue;
-      }
-
-      // Check if rarity is enabled for this shop
-      if (!this.config.rarityConfig[itemRarity]?.enabled) {
-        continue;
-      }
-
-      // Add to inventory with configured quantity
-      const maxQty = this.config.rarityConfig[itemRarity]?.maxQuantity ?? -1;
-      const quantity = maxQty === 0 ? 0 : (maxQty > 0 ? Math.ceil(Math.random() * maxQty) : -1);
+      // Get and normalize rarity
+      const itemRarity = this._normalizeRarity(item.system?.rarity);
       
-      if (quantity !== 0) {
-        this.addItem(item, { quantity });
+      // Check if rarity is enabled for this shop
+      const rarityConfig = this.config.rarityConfig[itemRarity];
+      if (!rarityConfig?.enabled) {
+        continue;
       }
+
+      // Check if we've hit the limit for this rarity
+      const maxItems = rarityConfig.maxQuantity ?? -1;
+      if (maxItems >= 0 && rarityCount[itemRarity] >= maxItems) {
+        continue;
+      }
+
+      // Add to inventory (unlimited stock per item, but limited variety)
+      this.addItem(item, { quantity: -1 });
+      rarityCount[itemRarity]++;
+      addedCount++;
     }
+
+    console.log(`Shop Maker | Added ${addedCount} items from ${compendiumName}`);
+    console.log("Shop Maker | Items per rarity:", rarityCount);
 
     await this.save();
     return this;

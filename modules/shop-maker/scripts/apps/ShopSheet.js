@@ -1,11 +1,13 @@
 /**
- * ShopSheet - Application for players to browse and purchase from shops
+ * ShopSheet - Application for players to browse and purchase from shops (V2)
  */
 
 import { SHOP_MAKER } from "../constants.js";
 import { ShopDocument } from "../documents/ShopDocument.js";
 
-export class ShopSheet extends Application {
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
+export class ShopSheet extends HandlebarsApplicationMixin(ApplicationV2) {
   constructor(shop, options = {}) {
     super(options);
     this.shop = shop;
@@ -20,28 +22,47 @@ export class ShopSheet extends Application {
     this.selectedActor = options.actor || this._getDefaultActor();
   }
 
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "shop-sheet",
-      classes: ["shop-maker", "shop-sheet"],
+  static DEFAULT_OPTIONS = {
+    id: "shop-sheet",
+    classes: ["shop-maker", "shop-sheet"],
+    window: {
       title: "Shop",
-      template: SHOP_MAKER.TEMPLATES.shopSheet,
-      width: 700,
-      height: 600,
+      icon: "fas fa-store",
       resizable: true
-    });
-  }
+    },
+    position: {
+      width: 700,
+      height: 600
+    },
+    actions: {
+      purchase: ShopSheet.#onPurchase,
+      viewItem: ShopSheet.#onViewItem,
+      editShop: ShopSheet.#onEditShop,
+      refresh: ShopSheet.#onRefresh
+    }
+  };
+
+  static PARTS = {
+    main: {
+      template: SHOP_MAKER.TEMPLATES.shopSheet
+    }
+  };
 
   get title() {
     return this.shop.name;
   }
 
   _getDefaultActor() {
-    // Get the user's assigned character or first owned character
     return game.user.character || game.actors.find(a => a.isOwner && a.type === "character");
   }
 
-  async getData() {
+  async _prepareContext(options) {
+    // Refresh shop data
+    const freshShop = ShopDocument.load(this.shop.id);
+    if (freshShop) {
+      this.shop = freshShop;
+    }
+
     const inventory = this.shop.getFilteredInventory(this.filters);
     const actorCurrency = this.selectedActor ? this._getActorCurrencyDisplay() : null;
     const selectedActorId = this.selectedActor?.id;
@@ -107,7 +128,7 @@ export class ShopSheet extends Application {
 
   _getActorCurrencyDisplay() {
     if (!this.selectedActor?.system?.currency) return null;
-    
+
     const currency = this.selectedActor.system.currency;
     const parts = [];
     for (const denom of ["pp", "gp", "ep", "sp", "cp"]) {
@@ -127,97 +148,105 @@ export class ShopSheet extends Application {
 
   _getActorFundsInShopCurrency() {
     if (!this.selectedActor?.system?.currency) return 0;
-    
+
     const currency = this.selectedActor.system.currency;
     const shopRate = SHOP_MAKER.CURRENCY[this.shop.config.currency]?.rate || 100;
-    
+
     let totalCopper = 0;
     for (const [denom, amount] of Object.entries(currency)) {
       const rate = SHOP_MAKER.CURRENCY[denom]?.rate || 0;
       totalCopper += amount * rate;
     }
-    
+
     return Math.floor(totalCopper / shopRate);
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
+  _onRender(context, options) {
+    const html = this.element;
 
     // Search
-    html.find(".search-input").on("input", foundry.utils.debounce((e) => {
-      this.filters.search = e.target.value;
-      this.render();
-    }, 300));
+    const searchInput = html.querySelector(".search-input");
+    if (searchInput) {
+      searchInput.addEventListener("input", foundry.utils.debounce((e) => {
+        this.filters.search = e.target.value;
+        this.render();
+      }, 300));
+    }
 
     // Type filter
-    html.find(".type-filter").on("change", (e) => {
-      this.filters.type = e.target.value || null;
-      this.render();
-    });
+    const typeFilter = html.querySelector(".type-filter");
+    if (typeFilter) {
+      typeFilter.addEventListener("change", (e) => {
+        this.filters.type = e.target.value || null;
+        this.render();
+      });
+    }
 
     // Rarity filter
-    html.find(".rarity-filter").on("change", (e) => {
-      this.filters.rarity = e.target.value || null;
-      this.render();
-    });
+    const rarityFilter = html.querySelector(".rarity-filter");
+    if (rarityFilter) {
+      rarityFilter.addEventListener("change", (e) => {
+        this.filters.rarity = e.target.value || null;
+        this.render();
+      });
+    }
 
     // Sort
-    html.find(".sort-select").on("change", (e) => {
-      this.filters.sort = e.target.value;
-      this.render();
-    });
+    const sortSelect = html.querySelector(".sort-select");
+    if (sortSelect) {
+      sortSelect.addEventListener("change", (e) => {
+        this.filters.sort = e.target.value;
+        this.render();
+      });
+    }
 
     // Sort direction
-    html.find(".sort-direction").on("click", (e) => {
-      this.filters.sortDir = this.filters.sortDir === "asc" ? "desc" : "asc";
-      this.render();
-    });
+    const sortDirection = html.querySelector(".sort-direction");
+    if (sortDirection) {
+      sortDirection.addEventListener("click", () => {
+        this.filters.sortDir = this.filters.sortDir === "asc" ? "desc" : "asc";
+        this.render();
+      });
+    }
 
     // In stock filter
-    html.find(".in-stock-filter").on("change", (e) => {
-      this.filters.inStock = e.target.checked;
-      this.render();
-    });
+    const inStockFilter = html.querySelector(".in-stock-filter");
+    if (inStockFilter) {
+      inStockFilter.addEventListener("change", (e) => {
+        this.filters.inStock = e.target.checked;
+        this.render();
+      });
+    }
 
     // Actor selection
-    html.find(".actor-select").on("change", (e) => {
-      const actorId = e.target.value;
-      this.selectedActor = game.actors.get(actorId);
-      this.render();
-    });
-
-    // Item hover for details
-    html.find(".shop-item").on("mouseenter", this._onItemHover.bind(this));
-
-    // Purchase button
-    html.find(".purchase-btn").on("click", this._onPurchase.bind(this));
-
-    // View item details
-    html.find(".item-name").on("click", this._onViewItem.bind(this));
-
-    // Edit shop (GM only)
-    html.find(".edit-shop").on("click", this._onEditShop.bind(this));
-
-    // Refresh
-    html.find(".refresh-shop").on("click", () => {
-      this.shop = ShopDocument.load(this.shop.id);
-      this.render();
-    });
-  }
-
-  async _onItemHover(event) {
-    const itemId = event.currentTarget.dataset.itemId;
-    const item = this.shop.inventory.find(i => i.id === itemId);
-    if (item) {
-      // Could show a tooltip or preview here
+    const actorSelect = html.querySelector(".actor-select");
+    if (actorSelect) {
+      actorSelect.addEventListener("change", (e) => {
+        const actorId = e.target.value;
+        this.selectedActor = game.actors.get(actorId);
+        this.render();
+      });
     }
+
+    // Item name click for details
+    html.querySelectorAll(".item-name").forEach(el => {
+      el.addEventListener("click", async (e) => {
+        const itemId = e.target.closest(".shop-item").dataset.itemId;
+        const item = this.shop.inventory.find(i => i.id === itemId);
+        if (item?.uuid) {
+          const sourceItem = await fromUuid(item.uuid);
+          if (sourceItem) {
+            sourceItem.sheet.render(true);
+          }
+        }
+      });
+    });
   }
 
-  async _onPurchase(event) {
-    event.preventDefault();
-    const itemId = event.currentTarget.closest(".shop-item").dataset.itemId;
+  static async #onPurchase(event, target) {
+    const itemId = target.closest(".shop-item").dataset.itemId;
     const item = this.shop.inventory.find(i => i.id === itemId);
-    
+
     if (!item) {
       ui.notifications.error(game.i18n.localize("SHOP_MAKER.Errors.ItemNotFound"));
       return;
@@ -228,7 +257,6 @@ export class ShopSheet extends Application {
       return;
     }
 
-    // Confirm purchase
     const price = this.shop.getItemPrice(item);
     const confirmed = await Dialog.confirm({
       title: game.i18n.localize("SHOP_MAKER.Purchase.ConfirmTitle"),
@@ -253,11 +281,10 @@ export class ShopSheet extends Application {
     }
   }
 
-  async _onViewItem(event) {
-    event.preventDefault();
-    const itemId = event.currentTarget.closest(".shop-item").dataset.itemId;
+  static async #onViewItem(event, target) {
+    const itemId = target.closest(".shop-item").dataset.itemId;
     const item = this.shop.inventory.find(i => i.id === itemId);
-    
+
     if (item?.uuid) {
       const sourceItem = await fromUuid(item.uuid);
       if (sourceItem) {
@@ -266,19 +293,12 @@ export class ShopSheet extends Application {
     }
   }
 
-  _onEditShop(event) {
-    event.preventDefault();
+  static #onEditShop(event, target) {
     game.shopMaker.openShopConfig(this.shop.id);
   }
 
-  /** @override */
-  async _render(force, options) {
-    // Refresh shop data before rendering
-    const freshShop = ShopDocument.load(this.shop.id);
-    if (freshShop) {
-      this.shop = freshShop;
-    }
-    return super._render(force, options);
+  static #onRefresh(event, target) {
+    this.shop = ShopDocument.load(this.shop.id);
+    this.render();
   }
 }
-

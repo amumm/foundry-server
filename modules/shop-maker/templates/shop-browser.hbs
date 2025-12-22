@@ -6,10 +6,10 @@
     </div>
     {{#if isGM}}
     <div class="header-actions">
-      <button type="button" class="create-preset" title="{{localize 'SHOP_MAKER.ShopBrowser.CreateFromPreset'}}">
+      <button type="button" data-action="createPreset" title="{{localize 'SHOP_MAKER.ShopBrowser.CreateFromPreset'}}">
         <i class="fas fa-magic"></i>
       </button>
-      <button type="button" class="create-shop" title="{{localize 'SHOP_MAKER.ShopBrowser.CreateNew'}}">
+      <button type="button" data-action="createShop" title="{{localize 'SHOP_MAKER.ShopBrowser.CreateNew'}}">
         <i class="fas fa-plus"></i>
       </button>
     </div>
@@ -34,23 +34,23 @@
         </p>
       </div>
       <div class="shop-actions">
-        <button type="button" class="open-shop" title="{{localize 'SHOP_MAKER.ShopBrowser.OpenShop'}}">
+        <button type="button" data-action="openShop" title="{{localize 'SHOP_MAKER.ShopBrowser.OpenShop'}}">
           <i class="fas fa-door-open"></i>
         </button>
         {{#if this.isOwner}}
-        <button type="button" class="edit-shop" title="{{localize 'SHOP_MAKER.ShopBrowser.EditShop'}}">
+        <button type="button" data-action="editShop" title="{{localize 'SHOP_MAKER.ShopBrowser.EditShop'}}">
           <i class="fas fa-edit"></i>
         </button>
-        <button type="button" class="toggle-shop" title="{{#if this.isOpen}}{{localize 'SHOP_MAKER.ShopBrowser.CloseShop'}}{{else}}{{localize 'SHOP_MAKER.ShopBrowser.OpenShopStatus'}}{{/if}}">
+        <button type="button" data-action="toggleShop" title="{{#if this.isOpen}}{{localize 'SHOP_MAKER.ShopBrowser.CloseShop'}}{{else}}{{localize 'SHOP_MAKER.ShopBrowser.OpenShopStatus'}}{{/if}}">
           <i class="fas fa-{{#if this.isOpen}}lock{{else}}lock-open{{/if}}"></i>
         </button>
-        <button type="button" class="share-shop" title="{{localize 'SHOP_MAKER.ShopBrowser.ShareShop'}}">
+        <button type="button" data-action="shareShop" title="{{localize 'SHOP_MAKER.ShopBrowser.ShareShop'}}">
           <i class="fas fa-share-alt"></i>
         </button>
-        <button type="button" class="duplicate-shop" title="{{localize 'SHOP_MAKER.ShopBrowser.DuplicateShop'}}">
+        <button type="button" data-action="duplicateShop" title="{{localize 'SHOP_MAKER.ShopBrowser.DuplicateShop'}}">
           <i class="fas fa-copy"></i>
         </button>
-        <button type="button" class="delete-shop danger" title="{{localize 'SHOP_MAKER.ShopBrowser.DeleteShop'}}">
+        <button type="button" data-action="deleteShop" class="danger" title="{{localize 'SHOP_MAKER.ShopBrowser.DeleteShop'}}">
           <i class="fas fa-trash"></i>
         </button>
         {{/if}}
@@ -62,7 +62,7 @@
       <i class="fas fa-store-slash"></i>
       <p>{{localize "SHOP_MAKER.ShopBrowser.NoShops"}}</p>
       {{#if isGM}}
-      <button type="button" class="create-shop">
+      <button type="button" data-action="createShop">
         <i class="fas fa-plus"></i> {{localize "SHOP_MAKER.ShopBrowser.CreateFirst"}}
       </button>
       {{/if}}
@@ -70,4 +70,3 @@
     {{/if}}
   </div>
 </div>
-

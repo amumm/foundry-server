@@ -7,15 +7,15 @@
   --shop-maker-bg-primary: #2a2318;
   --shop-maker-bg-secondary: #3d3425;
   --shop-maker-bg-tertiary: #1a1612;
-  --shop-maker-text-primary: #e8dcc4;
-  --shop-maker-text-secondary: #b8a88a;
-  --shop-maker-text-muted: #8a7a5c;
+  --shop-maker-text-primary: #ffffff;
+  --shop-maker-text-secondary: #e0e0e0;
+  --shop-maker-text-muted: #b0b0b0;
   --shop-maker-accent: #d4a855;
   --shop-maker-accent-hover: #e8c06a;
   --shop-maker-border: #4a3d2e;
   --shop-maker-border-light: #5c4d3a;
-  --shop-maker-danger: #a83232;
-  --shop-maker-success: #3a8a3a;
+  --shop-maker-danger: #ff6b6b;
+  --shop-maker-success: #51cf66;
   --shop-maker-shadow: rgba(0, 0, 0, 0.4);
 }
 

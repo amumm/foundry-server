@@ -9,11 +9,11 @@
     </div>
     <div class="shop-controls">
       {{#if isGM}}
-      <button type="button" class="edit-shop" title="{{localize 'SHOP_MAKER.ShopSheet.EditShop'}}">
+      <button type="button" data-action="editShop" title="{{localize 'SHOP_MAKER.ShopSheet.EditShop'}}">
         <i class="fas fa-cog"></i>
       </button>
       {{/if}}
-      <button type="button" class="refresh-shop" title="{{localize 'SHOP_MAKER.ShopSheet.Refresh'}}">
+      <button type="button" data-action="refresh" title="{{localize 'SHOP_MAKER.ShopSheet.Refresh'}}">
         <i class="fas fa-sync"></i>
       </button>
     </div>
@@ -114,7 +114,7 @@
             </div>
           </div>
           {{#if ../canPurchase}}
-          <button type="button" class="purchase-btn" {{#unless this.inStock}}disabled{{/unless}} {{#unless this.canAfford}}disabled title="{{localize 'SHOP_MAKER.ShopSheet.InsufficientFunds'}}"{{/unless}}>
+          <button type="button" class="purchase-btn" data-action="purchase" {{#unless this.inStock}}disabled{{/unless}} {{#unless this.canAfford}}disabled title="{{localize 'SHOP_MAKER.ShopSheet.InsufficientFunds'}}"{{/unless}}>
             <i class="fas fa-shopping-cart"></i>
             {{localize "SHOP_MAKER.ShopSheet.Buy"}}
           </button>

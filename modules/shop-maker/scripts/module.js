@@ -70,54 +70,26 @@ Hooks.on("chatMessage", (chatLog, message, chatData) => {
   }
 });
 
-// Add shop controls to the scene controls
-// Foundry v13 changed the controls structure - it's now an object, not an array
+// Add shop controls to the token controls in v13
+// v13 uses an object structure and we add our tools to the existing "tokens" control
 Hooks.on("getSceneControlButtons", (controls) => {
   if (!game.user.isGM) return;
 
-  // Foundry v13+ uses object structure with tools as an object
-  controls["shopMaker"] = {
-    name: "shopMaker",
-    title: game.i18n.localize("SHOP_MAKER.Controls.Title"),
-    icon: "fas fa-store",
-    layer: "tokens",
-    visible: true,
-    activeTool: "select",
-    tools: {
-      createShop: {
-        name: "createShop",
-        title: game.i18n.localize("SHOP_MAKER.Controls.CreateShop"),
-        icon: "fas fa-plus",
-        visible: true,
-        button: true,
-        onChange: () => {
-          console.log("Shop Maker | Create Shop clicked");
-          try {
-            new ShopConfig().render(true);
-          } catch (err) {
-            console.error("Shop Maker | Error opening ShopConfig:", err);
-            ui.notifications.error("Failed to open shop configuration");
-          }
-        }
-      },
-      manageShops: {
-        name: "manageShops",
-        title: game.i18n.localize("SHOP_MAKER.Controls.ManageShops"),
-        icon: "fas fa-list",
-        visible: true,
-        button: true,
-        onChange: () => {
-          console.log("Shop Maker | Manage Shops clicked");
-          try {
-            game.shopMaker.openShopBrowser();
-          } catch (err) {
-            console.error("Shop Maker | Error opening ShopBrowser:", err);
-            ui.notifications.error("Failed to open shop browser");
-          }
-        }
+  // Add our tools to the tokens control group
+  const tokensControl = controls.tokens;
+  if (tokensControl && tokensControl.tools) {
+    tokensControl.tools.shopBrowser = {
+      name: "shopBrowser",
+      title: game.i18n.localize("SHOP_MAKER.Controls.ManageShops"),
+      icon: "fas fa-store",
+      visible: true,
+      button: true,
+      onChange: () => {
+        console.log("Shop Maker | Manage Shops clicked");
+        game.shopMaker.openShopBrowser();
       }
-    }
-  };
+    };
+  }
 });
 
 // Socket handling for real-time updates

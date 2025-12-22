@@ -1,42 +1,55 @@
 /**
- * ShopConfig - Application for creating and editing shops
+ * ShopConfig - Application for creating and editing shops (V2)
  */
 
 import { SHOP_MAKER } from "../constants.js";
 import { ShopDocument } from "../documents/ShopDocument.js";
 
-export class ShopConfig extends FormApplication {
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
+export class ShopConfig extends HandlebarsApplicationMixin(ApplicationV2) {
   constructor(shop = null, options = {}) {
-    super(shop, options);
+    super(options);
     this.shop = shop || new ShopDocument();
     this.isNew = !shop;
   }
 
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "shop-config",
-      classes: ["shop-maker", "shop-config"],
+  static DEFAULT_OPTIONS = {
+    id: "shop-config",
+    classes: ["shop-maker", "shop-config"],
+    window: {
       title: "SHOP_MAKER.ShopConfig.Title",
-      template: SHOP_MAKER.TEMPLATES.shopConfig,
+      icon: "fas fa-cog",
+      resizable: true
+    },
+    position: {
       width: 600,
-      height: "auto",
-      closeOnSubmit: false,
-      submitOnChange: true,
-      tabs: [{ navSelector: ".tabs", contentSelector: ".tab-content", initial: "general" }]
-    });
-  }
+      height: "auto"
+    },
+    actions: {
+      selectImage: ShopConfig.#onSelectImage,
+      addFromCompendium: ShopConfig.#onAddFromCompendium,
+      addItem: ShopConfig.#onAddItem,
+      removeItem: ShopConfig.#onRemoveItem,
+      saveShop: ShopConfig.#onSaveShop,
+      deleteShop: ShopConfig.#onDeleteShop
+    }
+  };
+
+  static PARTS = {
+    main: {
+      template: SHOP_MAKER.TEMPLATES.shopConfig
+    }
+  };
 
   get title() {
-    return this.isNew 
+    return this.isNew
       ? game.i18n.localize("SHOP_MAKER.ShopConfig.TitleNew")
       : game.i18n.format("SHOP_MAKER.ShopConfig.TitleEdit", { name: this.shop.name });
   }
 
-  async getData() {
-    const data = await super.getData();
-    
+  async _prepareContext(options) {
     return {
-      ...data,
       shop: this.shop,
       isNew: this.isNew,
       itemTypes: this._getItemTypesData(),
@@ -95,36 +108,150 @@ export class ShopConfig extends FormApplication {
       }));
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
+  _onRender(context, options) {
+    const html = this.element;
 
-    // Image selection
-    html.find(".shop-image").on("click", this._onSelectImage.bind(this));
+    // Tab handling
+    this._activateTabs(html);
 
-    // Add from compendium
-    html.find(".add-from-compendium").on("click", this._onAddFromCompendium.bind(this));
+    // Name input
+    const nameInput = html.querySelector("input[name='name']");
+    if (nameInput) {
+      nameInput.addEventListener("change", (e) => {
+        this.shop.name = e.target.value || this.shop.name;
+      });
+    }
 
-    // Add item manually
-    html.find(".add-item").on("click", this._onAddItem.bind(this));
+    // Description
+    const descInput = html.querySelector("textarea[name='description']");
+    if (descInput) {
+      descInput.addEventListener("change", (e) => {
+        this.shop.description = e.target.value || "";
+      });
+    }
 
-    // Remove item
-    html.find(".remove-item").on("click", this._onRemoveItem.bind(this));
-
-    // Save and close
-    html.find(".save-shop").on("click", this._onSaveShop.bind(this));
-
-    // Delete shop
-    html.find(".delete-shop").on("click", this._onDeleteShop.bind(this));
+    // Is Open checkbox
+    const isOpenInput = html.querySelector("input[name='isOpen']");
+    if (isOpenInput) {
+      isOpenInput.addEventListener("change", (e) => {
+        this.shop.isOpen = e.target.checked;
+      });
+    }
 
     // Item type checkboxes
-    html.find(".item-type-checkbox").on("change", this._onItemTypeChange.bind(this));
+    html.querySelectorAll(".item-type-checkbox").forEach(checkbox => {
+      checkbox.addEventListener("change", (e) => {
+        const itemType = e.target.dataset.type;
+        if (e.target.checked) {
+          if (!this.shop.config.itemTypes.includes(itemType)) {
+            this.shop.config.itemTypes.push(itemType);
+          }
+        } else {
+          this.shop.config.itemTypes = this.shop.config.itemTypes.filter(t => t !== itemType);
+        }
+      });
+    });
 
     // Rarity checkboxes
-    html.find(".rarity-checkbox").on("change", this._onRarityChange.bind(this));
+    html.querySelectorAll(".rarity-checkbox").forEach(checkbox => {
+      checkbox.addEventListener("change", (e) => {
+        const rarity = e.target.dataset.rarity;
+        this.shop.config.rarityConfig[rarity].enabled = e.target.checked;
+        this.render();
+      });
+    });
+
+    // Rarity quantity inputs
+    html.querySelectorAll("input[name^='config.rarityConfig.'][name$='.maxQuantity']").forEach(input => {
+      input.addEventListener("change", (e) => {
+        const match = e.target.name.match(/config\.rarityConfig\.(\w+)\.maxQuantity/);
+        if (match) {
+          const rarity = match[1];
+          this.shop.config.rarityConfig[rarity].maxQuantity = parseInt(e.target.value) || 0;
+        }
+      });
+    });
+
+    // Rarity price modifier inputs
+    html.querySelectorAll("input[name^='config.rarityConfig.'][name$='.priceModifier']").forEach(input => {
+      input.addEventListener("change", (e) => {
+        const match = e.target.name.match(/config\.rarityConfig\.(\w+)\.priceModifier/);
+        if (match) {
+          const rarity = match[1];
+          this.shop.config.rarityConfig[rarity].priceModifier = parseFloat(e.target.value) || 1.0;
+        }
+      });
+    });
+
+    // Currency select
+    const currencySelect = html.querySelector("select[name='config.currency']");
+    if (currencySelect) {
+      currencySelect.addEventListener("change", (e) => {
+        this.shop.config.currency = e.target.value;
+      });
+    }
+
+    // Price modifier
+    const priceModInput = html.querySelector("input[name='config.priceModifier']");
+    if (priceModInput) {
+      priceModInput.addEventListener("change", (e) => {
+        this.shop.config.priceModifier = parseFloat(e.target.value) || 1.0;
+      });
+    }
+
+    // Allow sellback
+    const sellbackInput = html.querySelector("input[name='config.allowSellback']");
+    if (sellbackInput) {
+      sellbackInput.addEventListener("change", (e) => {
+        this.shop.config.allowSellback = e.target.checked;
+      });
+    }
+
+    // Sellback modifier
+    const sellbackModInput = html.querySelector("input[name='config.sellbackModifier']");
+    if (sellbackModInput) {
+      sellbackModInput.addEventListener("change", (e) => {
+        this.shop.config.sellbackModifier = parseFloat(e.target.value) || 0.5;
+      });
+    }
+
+    // Image click
+    const shopImage = html.querySelector(".shop-image");
+    if (shopImage) {
+      shopImage.addEventListener("click", () => this.#selectImage());
+    }
   }
 
-  async _onSelectImage(event) {
-    event.preventDefault();
+  _activateTabs(html) {
+    const tabs = html.querySelectorAll(".tabs .item");
+    const tabContents = html.querySelectorAll(".tab");
+
+    // Set initial active tab
+    if (tabs.length > 0) {
+      tabs[0].classList.add("active");
+      const initialTab = tabs[0].dataset.tab;
+      tabContents.forEach(content => {
+        content.classList.toggle("active", content.dataset.tab === initialTab);
+      });
+    }
+
+    tabs.forEach(tab => {
+      tab.addEventListener("click", (e) => {
+        const targetTab = e.currentTarget.dataset.tab;
+
+        // Update tab buttons
+        tabs.forEach(t => t.classList.remove("active"));
+        e.currentTarget.classList.add("active");
+
+        // Update tab content
+        tabContents.forEach(content => {
+          content.classList.toggle("active", content.dataset.tab === targetTab);
+        });
+      });
+    });
+  }
+
+  async #selectImage() {
     const fp = new FilePicker({
       type: "image",
       current: this.shop.image,
@@ -136,35 +263,31 @@ export class ShopConfig extends FormApplication {
     fp.browse();
   }
 
-  async _onAddFromCompendium(event) {
-    event.preventDefault();
-    const compendiumSelect = this.element.find("#compendium-select");
-    const compendiumId = compendiumSelect.val();
-    
+  static async #onSelectImage(event, target) {
+    this.#selectImage();
+  }
+
+  static async #onAddFromCompendium(event, target) {
+    const compendiumSelect = this.element.querySelector("#compendium-select");
+    const compendiumId = compendiumSelect?.value;
+
     if (!compendiumId) {
       ui.notifications.warn(game.i18n.localize("SHOP_MAKER.Warnings.SelectCompendium"));
       return;
     }
 
     await this.shop.populateFromCompendium({
-      compendiumName: compendiumId,
-      itemTypes: this.shop.config.itemTypes,
-      rarities: Object.entries(this.shop.config.rarityConfig)
-        .filter(([_, config]) => config.enabled)
-        .map(([key]) => key)
+      compendiumName: compendiumId
     });
 
-    ui.notifications.info(game.i18n.format("SHOP_MAKER.Notifications.ItemsAdded", { 
-      count: this.shop.inventory.length 
+    ui.notifications.info(game.i18n.format("SHOP_MAKER.Notifications.ItemsAdded", {
+      count: this.shop.inventory.length
     }));
     this.render();
   }
 
-  async _onAddItem(event) {
-    event.preventDefault();
-    
-    // Open item picker dialog
-    const items = await this._openItemPicker();
+  static async #onAddItem(event, target) {
+    const items = await this.#openItemPicker();
     if (items && items.length > 0) {
       for (const item of items) {
         this.shop.addItem(item);
@@ -173,7 +296,7 @@ export class ShopConfig extends FormApplication {
     }
   }
 
-  async _openItemPicker() {
+  async #openItemPicker() {
     return new Promise((resolve) => {
       const content = `
         <div class="item-picker">
@@ -181,9 +304,9 @@ export class ShopConfig extends FormApplication {
             <label>${game.i18n.localize("SHOP_MAKER.ItemPicker.Source")}</label>
             <select id="item-source">
               <option value="world">${game.i18n.localize("SHOP_MAKER.ItemPicker.WorldItems")}</option>
-              ${game.packs.filter(p => p.documentName === "Item").map(p => 
-                `<option value="${p.collection}">${p.title}</option>`
-              ).join("")}
+              ${game.packs.filter(p => p.documentName === "Item").map(p =>
+        `<option value="${p.collection}">${p.title}</option>`
+      ).join("")}
             </select>
           </div>
           <div class="form-group">
@@ -219,14 +342,14 @@ export class ShopConfig extends FormApplication {
           }
         },
         render: (html) => {
-          this._setupItemPickerListeners(html);
+          this.#setupItemPickerListeners(html);
         },
         default: "add"
       }, { width: 500, height: 600 }).render(true);
     });
   }
 
-  _setupItemPickerListeners(html) {
+  #setupItemPickerListeners(html) {
     const searchInput = html.find("#item-search");
     const sourceSelect = html.find("#item-source");
     const resultsContainer = html.find("#item-results");
@@ -234,17 +357,17 @@ export class ShopConfig extends FormApplication {
     const doSearch = foundry.utils.debounce(async () => {
       const source = sourceSelect.val();
       const search = searchInput.val().toLowerCase();
-      
+
       let items = [];
       if (source === "world") {
-        items = game.items.filter(i => 
+        items = game.items.filter(i =>
           i.name.toLowerCase().includes(search)
         );
       } else {
         const pack = game.packs.get(source);
         if (pack) {
           const index = await pack.getIndex();
-          const matchingEntries = index.filter(e => 
+          const matchingEntries = index.filter(e =>
             e.name.toLowerCase().includes(search)
           );
           items = matchingEntries.slice(0, 50).map(e => ({
@@ -276,71 +399,19 @@ export class ShopConfig extends FormApplication {
     doSearch();
   }
 
-  async _onRemoveItem(event) {
-    event.preventDefault();
-    const itemId = event.currentTarget.dataset.itemId;
+  static async #onRemoveItem(event, target) {
+    const itemId = target.dataset.itemId;
     this.shop.removeItem(itemId);
     this.render();
   }
 
-  _onItemTypeChange(event) {
-    const checkbox = event.currentTarget;
-    const itemType = checkbox.dataset.type;
-    
-    if (checkbox.checked) {
-      if (!this.shop.config.itemTypes.includes(itemType)) {
-        this.shop.config.itemTypes.push(itemType);
-      }
-    } else {
-      this.shop.config.itemTypes = this.shop.config.itemTypes.filter(t => t !== itemType);
-    }
-  }
-
-  _onRarityChange(event) {
-    const checkbox = event.currentTarget;
-    const rarity = checkbox.dataset.rarity;
-    this.shop.config.rarityConfig[rarity].enabled = checkbox.checked;
-  }
-
-  async _updateObject(event, formData) {
-    const expanded = foundry.utils.expandObject(formData);
-    
-    // Update basic properties
-    this.shop.name = expanded.name || this.shop.name;
-    this.shop.description = expanded.description || "";
-    this.shop.isOpen = expanded.isOpen ?? true;
-    
-    // Update config
-    if (expanded.config) {
-      this.shop.config.priceModifier = parseFloat(expanded.config.priceModifier) || 1.0;
-      this.shop.config.allowSellback = expanded.config.allowSellback ?? false;
-      this.shop.config.sellbackModifier = parseFloat(expanded.config.sellbackModifier) || 0.5;
-      this.shop.config.currency = expanded.config.currency || "gp";
-      
-      // Update rarity quantities and modifiers
-      if (expanded.config.rarityConfig) {
-        for (const [rarity, config] of Object.entries(expanded.config.rarityConfig)) {
-          if (this.shop.config.rarityConfig[rarity]) {
-            this.shop.config.rarityConfig[rarity].maxQuantity = parseInt(config.maxQuantity) || 0;
-            this.shop.config.rarityConfig[rarity].priceModifier = parseFloat(config.priceModifier) || 1.0;
-          }
-        }
-      }
-    }
-  }
-
-  async _onSaveShop(event) {
-    event.preventDefault();
-    await this.submit();
+  static async #onSaveShop(event, target) {
     await this.shop.save();
-    
     ui.notifications.info(game.i18n.format("SHOP_MAKER.Notifications.ShopSaved", { name: this.shop.name }));
     this.close();
   }
 
-  async _onDeleteShop(event) {
-    event.preventDefault();
-    
+  static async #onDeleteShop(event, target) {
     const confirmed = await Dialog.confirm({
       title: game.i18n.localize("SHOP_MAKER.ShopConfig.DeleteConfirmTitle"),
       content: game.i18n.format("SHOP_MAKER.ShopConfig.DeleteConfirmContent", { name: this.shop.name })
@@ -353,4 +424,3 @@ export class ShopConfig extends FormApplication {
     }
   }
 }
-
