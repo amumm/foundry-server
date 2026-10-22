@@ -1,0 +1,19 @@
+services:
+  foundry:
+    image: ${FOUNDRY_IMAGE}
+    container_name: foundry
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      FOUNDRY_VTT_DATA_PATH: /data
+    volumes:
+      - /mnt/foundry-data:/data
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    env_file: tunnel.env
+    depends_on:
+      - foundry
