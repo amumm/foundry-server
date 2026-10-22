@@ -40,3 +40,7 @@ README.md
 # Runtime data directories (will be created in container)
 data
 
+# Deployment tooling, not part of the Foundry image
+deploy
+discord-bot
+
