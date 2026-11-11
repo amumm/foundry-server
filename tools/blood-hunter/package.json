@@ -1,0 +1,12 @@
+{
+  "name": "blood-hunter-pack-builder",
+  "private": true,
+  "type": "module",
+  "description": "Generates and compiles the compendium packs for modules/blood-hunter.",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "@foundryvtt/foundryvtt-cli": "^3.0.5"
+  }
+}
