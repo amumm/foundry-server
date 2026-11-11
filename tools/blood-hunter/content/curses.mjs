@@ -363,7 +363,11 @@ export default function curseDocs() {
     name: "Soul Eater",
     img: "icons/magic/unholy/orb-glowing-purple.webp",
     ...DURATION.untilSourceTurnEnd,
-    changes: [flagChange("advantage.attack.all"), ["flags.blood-hunter.soulEater", CUSTOM, "1"]]
+    changes: [
+      flagChange("advantage.attack.all"),
+      ...["acid", "bludgeoning", "cold", "fire", "force", "lightning", "necrotic", "piercing", "poison", "psychic",
+        "radiant", "slashing", "thunder"].map(t => ["system.traits.dr.value", MODES.ADD, t])
+    ]
   });
   docs.push(curse("soul-eater", {
     name: "Blood Curse of the Soul Eater",

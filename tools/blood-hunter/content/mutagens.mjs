@@ -6,8 +6,6 @@ function mutagen(slug, { name, img, description, requirements = "", changes = []
   const eff = effect(`mutagen-${slug}`, {
     name,
     img,
-    transfer: true,
-    disabled: true,
     ...duration,
     changes
   });
@@ -112,11 +110,7 @@ export default function mutagenDocs() {
     mutagen("nighteye", {
       name: "Nighteye", img: "icons/magic/perception/eye-slit-orange.webp",
       description: `You have darkvision out to a range of 60 feet. If you already have darkvision, its range increases by 60 feet. However, you have disadvantage on attack rolls and on Wisdom (Perception) checks that rely on sight when you, the target of your attack, or whatever you are trying to perceive is in direct sunlight.`,
-      changes: [
-        ["system.attributes.senses.darkvision", UPGRADE, "60"],
-        flagChange("disadvantage.attack.all", "sunlight"),
-        flagChange("disadvantage.skill.prc", "sunlight")
-      ]
+      changes: [["system.attributes.senses.darkvision", ADD, "60"]]
     }),
     mutagen("percipient", {
       name: "Percipient", img: "icons/magic/perception/third-eye-blue-red.webp",

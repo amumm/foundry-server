@@ -1,6 +1,6 @@
 import { MODES, effect, feat, flagChange, html, itemId, saveActivity, stats } from "../lib/helpers.mjs";
 
-const { ADD, CUSTOM } = MODES;
+const { ADD, OVERRIDE } = MODES;
 
 export default function optionDocs() {
   const docs = [];
@@ -9,7 +9,7 @@ export default function optionDocs() {
     name: "Variant Hemocraft (Wisdom)",
     img: "icons/magic/perception/third-eye-blue-red.webp",
     type: "class",
-    subtype: "optionalFeature",
+    subtype: "",
     requirements: "Blood Hunter (with DM permission)",
     description: html(`
       With your DM's permission, you can choose to use your Wisdom modifier for all your blood hunter features that use
@@ -22,7 +22,7 @@ export default function optionDocs() {
       name: "Hemocraft: Wisdom",
       img: "icons/magic/perception/third-eye-blue-red.webp",
       transfer: true,
-      changes: [["flags.blood-hunter.hemocraftAbility", ADD, "wis"]]
+      changes: [["flags.blood-hunter.hemocraftAbility", OVERRIDE, "wis"]]
     })]
   }));
 
