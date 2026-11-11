@@ -1,0 +1,108 @@
+{
+  "id": "blood-hunter",
+  "title": "Blood Hunter",
+  "description": "The Blood Hunter class (levels 1-20) with the Ghostslayer, Lycan, Mutant, and Profane Soul orders, automated for dnd5e with Midi-QOL and DAE.",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "authors": [
+    {
+      "name": "Andrew Mumm"
+    }
+  ],
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system",
+        "compatibility": {
+          "minimum": "5.2.0",
+          "verified": "5.2.3"
+        }
+      }
+    ],
+    "requires": [
+      { "id": "midi-qol", "type": "module" },
+      { "id": "dae", "type": "module" },
+      { "id": "lib-wrapper", "type": "module" },
+      { "id": "socketlib", "type": "module" }
+    ],
+    "recommends": [
+      {
+        "id": "times-up",
+        "type": "module",
+        "reason": "Expires round- and turn-based durations such as \"until the end of your next turn\"."
+      }
+    ]
+  },
+  "esmodules": [
+    "scripts/module.js"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "packs": [
+    {
+      "name": "bh-class",
+      "label": "Blood Hunter: Class & Orders",
+      "path": "packs/bh-class",
+      "type": "Item",
+      "system": "dnd5e",
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
+    },
+    {
+      "name": "bh-features",
+      "label": "Blood Hunter: Features",
+      "path": "packs/bh-features",
+      "type": "Item",
+      "system": "dnd5e",
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
+    },
+    {
+      "name": "bh-curses",
+      "label": "Blood Hunter: Blood Curses",
+      "path": "packs/bh-curses",
+      "type": "Item",
+      "system": "dnd5e",
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
+    },
+    {
+      "name": "bh-rites",
+      "label": "Blood Hunter: Crimson Rites",
+      "path": "packs/bh-rites",
+      "type": "Item",
+      "system": "dnd5e",
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
+    },
+    {
+      "name": "bh-mutagens",
+      "label": "Blood Hunter: Mutagens",
+      "path": "packs/bh-mutagens",
+      "type": "Item",
+      "system": "dnd5e",
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
+    },
+    {
+      "name": "bh-options",
+      "label": "Blood Hunter: Options",
+      "path": "packs/bh-options",
+      "type": "Item",
+      "system": "dnd5e",
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
+    }
+  ],
+  "packFolders": [
+    {
+      "name": "Blood Hunter",
+      "sorting": "m",
+      "packs": ["bh-class", "bh-features", "bh-curses", "bh-rites", "bh-mutagens", "bh-options"]
+    }
+  ],
+  "flags": {}
+}

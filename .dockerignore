@@ -43,4 +43,6 @@ data
 # Deployment tooling, not part of the Foundry image
 deploy
 discord-bot
+tools
+.tmp-ref
 

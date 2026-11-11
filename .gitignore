@@ -1,3 +1,11 @@
 # Node modules (except private @foundryvtt packages needed for Docker build)
 node_modules/*
 !node_modules/@foundryvtt
+
+# Downloaded third-party sources used only as reference
+.tmp-ref/
+
+# LevelDB runtime files in compiled compendium packs
+modules/*/packs/**/LOCK
+modules/*/packs/**/LOG
+modules/*/packs/**/LOG.old
