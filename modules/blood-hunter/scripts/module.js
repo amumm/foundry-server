@@ -50,7 +50,12 @@ function wrapGetRollData() {
   function addHemocraft(data) {
     if ( !this.classes?.[BH_CLASS] ) return data;
     const ability = this.flags?.[MODULE_ID]?.hemocraftAbility === "wis" ? "wis" : "int";
-    const mod = this.system.abilities?.[ability]?.mod ?? 0;
+    const abilityData = this.system.abilities?.[ability];
+    // Prefer prepared mod; fall back to score so early prepareDerivedData (before
+    // prepareAbilities) still resolves Dark Augmentation and similar formulas.
+    const mod = Number.isFinite(abilityData?.mod)
+      ? abilityData.mod
+      : Math.floor(((abilityData?.value ?? 10) - 10) / 2);
     const prof = this.system.attributes?.prof ?? 0;
     const die = this.system.scale?.[BH_CLASS]?.["hemocraft-die"];
     data.hemocraft = {
